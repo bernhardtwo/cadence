@@ -1,0 +1,22 @@
+# Build output
+build/
+out/
+compile_commands.json
+
+# Editor and tooling state
+.vs/
+.vscode/
+.idea/
+.cache/
+.qmlls.ini
+CMakeUserPresets.json
+*.user
+*.user.*
+*.autosave
+
+# Local artifacts that must not be committed
+docs/screenshots/
+
+# OS noise
+.DS_Store
+Thumbs.db
