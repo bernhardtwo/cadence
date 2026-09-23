@@ -247,6 +247,7 @@ TEST_CASE("completed sessions count the focus phases that have ended", "[pomodor
 
     session.pause(clock.now());
     CHECK(session.completedSessions() == 1);
+    CHECK(session.activePhase() == PomodoroState::ShortBreak);
     session.resume(clock.now());
 
     clock.advance(5min);
@@ -256,6 +257,7 @@ TEST_CASE("completed sessions count the focus phases that have ended", "[pomodor
 
     session.pause(clock.now());
     CHECK(session.completedSessions() == 1);
+    CHECK(session.activePhase() == PomodoroState::Focus);
     session.resume(clock.now());
 
     clock.advance(25min + 5min + 25min);

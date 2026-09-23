@@ -54,6 +54,8 @@ public:
     PomodoroEvents tick(Instant now);
 
     PomodoroState state() const noexcept { return state_; }
+    // The timed phase, also while paused, so a UI can show what will resume.
+    PomodoroState activePhase() const noexcept { return state_ == PomodoroState::Paused ? pausedFrom_ : state_; }
     int currentIndex() const noexcept { return index_; }
     int totalCount() const noexcept { return count_; }
     // Focus sessions finished so far; a break counts the session it follows as finished.

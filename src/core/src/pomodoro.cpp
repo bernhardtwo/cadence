@@ -84,8 +84,7 @@ PomodoroEvents PomodoroSession::tick(Instant now) {
 }
 
 int PomodoroSession::completedSessions() const noexcept {
-    const PomodoroState phase = state_ == PomodoroState::Paused ? pausedFrom_ : state_;
-    switch (phase) {
+    switch (activePhase()) {
     case PomodoroState::Idle:
         return 0;
     case PomodoroState::Focus:
