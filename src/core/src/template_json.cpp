@@ -29,9 +29,11 @@ std::string indexed(const std::string& location, std::size_t index) {
     return location + "[" + std::to_string(index) + "]";
 }
 
-const Json* optionalMember(const Json& object, const char* key, const std::string& location) {
+// Both lookups take the location by value: GCC's -Wdangling-reference flags a reference returning
+// function that receives a temporary through a reference parameter.
+const Json* optionalMember(const Json& object, const char* key, std::string_view location) {
     if (!object.is_object()) {
-        fail(location, "expected an object");
+        fail(std::string(location), "expected an object");
     }
     const auto it = object.find(key);
     if (it == object.end() || it->is_null()) {
@@ -40,10 +42,10 @@ const Json* optionalMember(const Json& object, const char* key, const std::strin
     return &*it;
 }
 
-const Json& requireMember(const Json& object, const char* key, const std::string& location) {
+const Json& requireMember(const Json& object, const char* key, std::string_view location) {
     const Json* member = optionalMember(object, key, location);
     if (member == nullptr) {
-        fail(location, std::string("missing \"") + key + "\"");
+        fail(std::string(location), std::string("missing \"") + key + "\"");
     }
     return *member;
 }
