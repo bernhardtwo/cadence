@@ -64,6 +64,8 @@ jobs:
           arch: x64
 
       # 4.4.x uses the "$/action" self-repository syntax, which the Windows runner does not accept yet.
+      # aqtinstall 3.3.0 predates the flattened Qt 6.11 Windows repository layout; the pinned commit
+      # is the merge of miurahr/aqtinstall#1000 that adds support for it.
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.3.1
         with:
@@ -71,6 +73,7 @@ jobs:
           arch: ${{ matrix.qt_arch }}
           modules: qtmultimedia
           cache: true
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b
 
       - name: Configure
         run: cmake --preset ${{ matrix.preset }}
