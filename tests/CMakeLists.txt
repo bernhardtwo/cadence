@@ -18,6 +18,7 @@ add_executable(cadence_core_tests
     core/planner_test.cpp
     core/pomodoro_test.cpp
     core/progress_json_test.cpp
+    core/settings_json_test.cpp
     core/template_json_test.cpp
     core/version_test.cpp)
 
