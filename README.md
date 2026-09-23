@@ -10,19 +10,36 @@ the things you glance at and a quiet grotesk for everything else.
 
 ## Status
 
-Milestone 3: Cadence lives in the tray on a real day. The scheduling engine plans the day from a
-weekly template, alarms fire from the wall clock with sound, a tray notification and a full screen
-overlay, progress is saved per day, and the app can launch at login. The window is a minimal live
-view; the full Signal interface is the next milestone. Music integration is not implemented yet.
+Milestone 4: the full Signal interface. Today shows the day as stacked bars with the current block
+in the accent, its pomodoro grid and the block actions; while a pomodoro runs the big timer counts
+the phase and the block end becomes secondary text. Focus mode fills the screen with the running
+phase. The break overlay takes the accent and logs push-ups; block start and confirmation prompts
+sit on the dark canvas. The Templates screen edits the weekly template with validation from core
+and applies changes to today at once. Settings persist startup, alarm and push-up preferences and
+drive the runtime. Stats is a placeholder for the next milestone and music integration is not
+implemented yet.
 
 ### Running it
 
 - The weekly template is copied to your config directory on first start
-  (`templates/week.json` under the Cadence app config location) and edited there.
+  (`templates/week.json` under the Cadence app config location) and edited from the Templates
+  screen or by hand.
+- Settings live next to it in `settings.json`.
 - Progress is written per day under the app data location, in `progress/YYYY-MM-DD.json`.
 - Closing the window hides Cadence to the tray; Quit in the tray menu exits.
 - `cadence --minimized` starts hidden in the tray. `--enable-autostart` and `--disable-autostart`
-  register or remove launch at login and exit; the tray menu toggles the same setting.
+  register or remove launch at login and exit; the tray menu and the Settings screen toggle the
+  same setting.
+
+### Keyboard
+
+| Key | Action |
+| --- | --- |
+| Space | Start, pause or resume the current block |
+| F | Enter or leave focus mode |
+| Esc | Leave focus mode or dismiss an overlay |
+| Return | Primary action of an overlay |
+| Ctrl+1 to Ctrl+4 | Today, Stats, Templates, Settings |
 
 ## Screenshots
 
