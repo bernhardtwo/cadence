@@ -339,3 +339,21 @@ TEST_CASE("loading a template with problems throws and lists all of them", "[jso
     CHECK_THROWS_WITH(loadTemplateDocument(json), ContainsSubstring("week.mon.blocks[0]: unknown activity id"));
     CHECK_THROWS_WITH(loadTemplateDocument(json), ContainsSubstring("week.mon.blocks[1]: block crosses midnight"));
 }
+
+TEST_CASE("the full screen alarm flag defaults to true and is written only when off", "[json]") {
+    const std::string json = R"({"version": 1,
+        "activities": [{"id": "a", "name": "A", "color": "#112233"}],
+        "week": {"mon": {"dayStart": "09:00", "blocks": [
+            {"activity": "a", "kind": "flexible", "duration": 30},
+            {"activity": "a", "kind": "flexible", "duration": 30, "fullscreenAlarm": false}]}}})";
+
+    const TemplateDocument document = loadTemplateDocument(json);
+    const DayTemplate& monday = *document.week.day(std::chrono::Monday);
+    REQUIRE(monday.blocks.size() == 2);
+    CHECK(monday.blocks[0].fullscreenAlarm);
+    CHECK_FALSE(monday.blocks[1].fullscreenAlarm);
+
+    const std::string text = serializeTemplateDocument(document);
+    CHECK_THAT(text, ContainsSubstring("\"fullscreenAlarm\": false"));
+    CHECK(loadTemplateDocument(text) == document);
+}

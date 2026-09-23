@@ -160,6 +160,9 @@ BlockTemplate parseBlock(const Json& value, const std::string& location) {
     if (const Json* pushups = optionalMember(value, "pushupsOnBreak", location)) {
         block.pushupsOnBreak = asBool(*pushups, join(location, "pushupsOnBreak"));
     }
+    if (const Json* fullscreen = optionalMember(value, "fullscreenAlarm", location)) {
+        block.fullscreenAlarm = asBool(*fullscreen, join(location, "fullscreenAlarm"));
+    }
     return block;
 }
 
@@ -220,6 +223,9 @@ Json toJson(const BlockTemplate& block) {
         out["pomodoro"] = toJson(*block.pomodoro);
     }
     out["pushupsOnBreak"] = block.pushupsOnBreak;
+    if (!block.fullscreenAlarm) {
+        out["fullscreenAlarm"] = false;
+    }
     return out;
 }
 

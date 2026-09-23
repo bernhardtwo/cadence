@@ -38,6 +38,8 @@ struct BlockTemplate {
     std::optional<Minutes> durationMinutes;
     std::optional<PomodoroPlan> pomodoro;
     bool pushupsOnBreak = false;
+    // Whether the start alarm takes over the screen or stays a sound and a notification.
+    bool fullscreenAlarm = true;
 
     friend bool operator==(const BlockTemplate&, const BlockTemplate&) = default;
 };
