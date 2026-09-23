@@ -39,6 +39,7 @@ private:
     QMenu menu_;
     QAction* showAction_ = nullptr;
     QAction* toggleAction_ = nullptr;
+    QAction* finishAction_ = nullptr;
     QAction* skipAction_ = nullptr;
     QAction* autostartAction_ = nullptr;
     QAction* quitAction_ = nullptr;

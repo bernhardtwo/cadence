@@ -22,6 +22,7 @@ TrayController::TrayController(DayController& day, cadence::platform::Autostart&
             day_.start();
         }
     });
+    finishAction_ = menu_.addAction(u"Finish block"_s, &day_, &DayController::finish);
     skipAction_ = menu_.addAction(u"Skip block"_s, &day_, &DayController::skip);
     menu_.addSeparator();
     autostartAction_ = menu_.addAction(u"Launch at login"_s);
@@ -67,6 +68,7 @@ void TrayController::refresh() {
         toggleAction_->setText(u"Start"_s);
         toggleAction_->setEnabled(day_.canStart());
     }
+    finishAction_->setEnabled(day_.canFinish());
     skipAction_->setEnabled(day_.canSkip());
 }
 
