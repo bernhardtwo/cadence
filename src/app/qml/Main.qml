@@ -76,7 +76,7 @@ ApplicationWindow {
 
         function onPushupPrompt(blockIndex, setIndex) {
             overlay.pushupsPending = true
-            if (overlay.visible && overlay.mode === "focusEnd") {
+            if (overlay.visible && overlay.mode === "break") {
                 overlay.showPushups = true
             }
         }
@@ -84,11 +84,12 @@ ApplicationWindow {
         function onAlarmRaised(kind, blockIndex, title, message) {
             if (kind === DayController.BlockStart) {
                 if (DayController.blockFullscreenAlarm(blockIndex)) {
-                    overlay.open("blockStart", blockIndex, title, message)
+                    overlay.open("blockStart", blockIndex, title, DayController.currentStartText + " to " + DayController.currentEndText)
                 }
             } else if (kind === DayController.PomodoroFocusEnd) {
-                overlay.open("focusEnd", blockIndex, DayController.currentName, message)
-                overlay.showPushups = overlay.pushupsPending
+                const mode = DayController.pomodoroOnBreak ? "break" : "done"
+                overlay.open(mode, blockIndex, DayController.currentName, mode === "break" ? DayController.pomodoroPhase : "Last pomodoro finished")
+                overlay.showPushups = mode === "break" && overlay.pushupsPending
                 overlay.pushupsPending = false
             } else if (kind === DayController.UnconfirmedPending) {
                 overlay.open("unconfirmed", blockIndex, title, "Did you do this?")
