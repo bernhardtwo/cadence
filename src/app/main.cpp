@@ -4,6 +4,7 @@
 #include "fileprogressstore.hpp"
 #include "singleinstance.hpp"
 #include "systemclock.hpp"
+#include "templateeditor.hpp"
 #include "trayicon.hpp"
 #include "wakewatcher.hpp"
 
@@ -114,10 +115,18 @@ int main(int argc, char* argv[]) {
         qWarning("%s", qPrintable(templateLoad.error));
     }
 
+    // The editor keeps its own copy; the controller takes the document it will run the day from.
+    TemplateEditor editor(templateLoad.document, templateLoad.path);
+    TemplateEditor::setInstance(&editor);
+
     DayController controller(std::make_unique<SystemClock>(),
                              std::make_unique<FileProgressStore>(apppaths::progressDir()),
                              std::move(templateLoad.document), templateLoad.error);
     DayController::setInstance(&controller);
+    QObject::connect(&editor, &TemplateEditor::saved, &controller,
+                     [&controller](const cadence::core::TemplateDocument& document) {
+                         controller.setDocument(document, {});
+                     });
 
     WakeWatcher wakeWatcher;
     QObject::connect(&wakeWatcher, &WakeWatcher::wakeDetected, &controller, &DayController::evaluateNow);

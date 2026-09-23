@@ -20,6 +20,8 @@ qt_add_executable(cadence
     singleinstance.hpp
     systemclock.cpp
     systemclock.hpp
+    templateeditor.cpp
+    templateeditor.hpp
     trayicon.cpp
     trayicon.hpp
     wakewatcher.cpp
@@ -40,6 +42,9 @@ set(CADENCE_QML_FILES
     qml/PomodoroGrid.qml
     qml/SettingsScreen.qml
     qml/SignalButton.qml
+    qml/SignalChoice.qml
+    qml/SignalField.qml
+    qml/SignalToggle.qml
     qml/StatsScreen.qml
     qml/TemplatesScreen.qml
     qml/TodayScreen.qml
