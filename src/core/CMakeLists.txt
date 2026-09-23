@@ -4,16 +4,31 @@ add_library(cadence_core STATIC
     include/cadence/core/clock.hpp
     include/cadence/core/planner.hpp
     include/cadence/core/pomodoro.hpp
+    include/cadence/core/template_json.hpp
     include/cadence/core/time.hpp
     include/cadence/core/version.hpp
     src/block.cpp
     src/planner.cpp
     src/pomodoro.cpp
+    src/template_json.cpp
     src/time.cpp
     src/version.cpp)
 add_library(cadence::core ALIAS cadence_core)
 
 target_include_directories(cadence_core PUBLIC include)
+
+include(FetchContent)
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(JSON_Install OFF CACHE INTERNAL "")
+FetchContent_Declare(nlohmann_json
+    URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+    URL_HASH SHA256=42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_MakeAvailable(nlohmann_json)
+
+# JSON stays an implementation detail of the core library, and third party headers are not held
+# to the core warning level.
+target_include_directories(cadence_core SYSTEM PRIVATE "${nlohmann_json_SOURCE_DIR}/include")
 
 target_compile_definitions(cadence_core PRIVATE
     CADENCE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
