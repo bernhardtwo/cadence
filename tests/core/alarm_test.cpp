@@ -279,3 +279,29 @@ TEST_CASE("reset forgets fired alarms for a new day", "[alarm]") {
     CHECK(h.eval(at(8, 29, 59)).empty());
     CHECK(h.eval(at(8, 30)).size() == 1);
 }
+
+TEST_CASE("a new policy applies to later snoozes and leads", "[alarm]") {
+    Harness h;
+    h.eval(at(8, 29, 59));
+    REQUIRE(h.eval(at(8, 30)).size() == 1);
+    REQUIRE(h.scheduler.snooze(0, at(8, 30, 10)));
+
+    AlarmPolicy policy = h.scheduler.policy();
+    policy.maxSnoozes = 1;
+    policy.snoozeLength = 2min;
+    h.scheduler.setPolicy(policy);
+
+    CHECK_FALSE(h.scheduler.canSnooze(0));
+    std::vector<Alarm> due = h.eval(at(8, 35, 10));
+    REQUIRE(due.size() == 1);
+    CHECK(due[0].kind == AlarmKind::BlockStart);
+
+    policy.maxSnoozes = 3;
+    h.scheduler.setPolicy(policy);
+    CHECK(h.scheduler.canSnooze(0));
+    REQUIRE(h.scheduler.snooze(0, at(8, 36)));
+    CHECK(h.eval(at(8, 37, 59)).empty());
+    due = h.eval(at(8, 38));
+    REQUIRE(due.size() == 1);
+    CHECK(due[0] == Alarm{AlarmKind::BlockStart, 0, at(8, 38)});
+}

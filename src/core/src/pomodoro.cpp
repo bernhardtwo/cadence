@@ -83,6 +83,24 @@ PomodoroEvents PomodoroSession::tick(Instant now) {
     return events;
 }
 
+int PomodoroSession::completedSessions() const noexcept {
+    const PomodoroState phase = state_ == PomodoroState::Paused ? pausedFrom_ : state_;
+    switch (phase) {
+    case PomodoroState::Idle:
+        return 0;
+    case PomodoroState::Focus:
+        return index_;
+    case PomodoroState::ShortBreak:
+    case PomodoroState::LongBreak:
+        return index_ + 1;
+    case PomodoroState::Completed:
+        return count_;
+    case PomodoroState::Paused:
+        break;
+    }
+    return index_;
+}
+
 Seconds PomodoroSession::remaining(Instant now) const noexcept {
     switch (state_) {
     case PomodoroState::Idle:

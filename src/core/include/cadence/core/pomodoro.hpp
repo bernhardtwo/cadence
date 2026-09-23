@@ -56,6 +56,8 @@ public:
     PomodoroState state() const noexcept { return state_; }
     int currentIndex() const noexcept { return index_; }
     int totalCount() const noexcept { return count_; }
+    // Focus sessions finished so far; a break counts the session it follows as finished.
+    int completedSessions() const noexcept;
     const PomodoroPlan& plan() const noexcept { return plan_; }
     bool pushupsOnBreak() const noexcept { return pushupsOnBreak_; }
     Seconds remaining(Instant now) const noexcept;

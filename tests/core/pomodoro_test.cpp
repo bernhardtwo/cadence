@@ -231,3 +231,35 @@ TEST_CASE("operations outside their state are ignored", "[pomodoro]") {
     CHECK(session.resume(at(9, 1)).empty());
     CHECK(session.state() == PomodoroState::Focus);
 }
+
+TEST_CASE("completed sessions count the focus phases that have ended", "[pomodoro]") {
+    PomodoroSession session(PomodoroPlan{}, 3, false);
+    FakeClock clock(at(9, 0));
+    CHECK(session.completedSessions() == 0);
+
+    session.start(clock.now());
+    CHECK(session.completedSessions() == 0);
+
+    clock.advance(25min);
+    session.tick(clock.now());
+    REQUIRE(session.state() == PomodoroState::ShortBreak);
+    CHECK(session.completedSessions() == 1);
+
+    session.pause(clock.now());
+    CHECK(session.completedSessions() == 1);
+    session.resume(clock.now());
+
+    clock.advance(5min);
+    session.tick(clock.now());
+    REQUIRE(session.state() == PomodoroState::Focus);
+    CHECK(session.completedSessions() == 1);
+
+    session.pause(clock.now());
+    CHECK(session.completedSessions() == 1);
+    session.resume(clock.now());
+
+    clock.advance(25min + 5min + 25min);
+    session.tick(clock.now());
+    REQUIRE(session.state() == PomodoroState::Completed);
+    CHECK(session.completedSessions() == 3);
+}

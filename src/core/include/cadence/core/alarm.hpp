@@ -59,6 +59,8 @@ public:
     void dismiss(std::size_t blockIndex);
 
     const AlarmPolicy& policy() const noexcept { return policy_; }
+    // Takes effect on the next evaluation; snoozes already used keep counting against the new limit.
+    void setPolicy(AlarmPolicy policy) noexcept { policy_ = policy; }
     std::optional<Instant> lastEvaluation() const noexcept { return last_; }
 
     // Forgets everything fired so far; used when the day changes.
