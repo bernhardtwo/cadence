@@ -5,6 +5,8 @@ set(QT_QML_GENERATE_QMLLS_INI ON)
 
 qt_add_executable(cadence
     main.cpp
+    alarmsounds.cpp
+    alarmsounds.hpp
     appinfo.cpp
     appinfo.hpp
     apppaths.cpp
@@ -31,12 +33,14 @@ set_target_properties(cadence PROPERTIES
 
 set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
 set_source_files_properties(qml/SignalButton.qml PROPERTIES QT_RESOURCE_ALIAS SignalButton.qml)
+set_source_files_properties(qml/Overlay.qml PROPERTIES QT_RESOURCE_ALIAS Overlay.qml)
 
 qt_add_qml_module(cadence
     URI Cadence
     VERSION 1.0
     QML_FILES
         qml/Main.qml
+        qml/Overlay.qml
         qml/SignalButton.qml
     OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml/Cadence"
     IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
@@ -54,6 +58,13 @@ qt_add_resources(cadence "cadence_templates"
     PREFIX "/templates"
     BASE "${PROJECT_SOURCE_DIR}/resources/templates"
     FILES "${PROJECT_SOURCE_DIR}/resources/templates/default.json")
+
+qt_add_resources(cadence "cadence_sounds"
+    PREFIX "/sounds"
+    BASE "${PROJECT_SOURCE_DIR}/resources/sounds"
+    FILES
+        "${PROJECT_SOURCE_DIR}/resources/sounds/chime.wav"
+        "${PROJECT_SOURCE_DIR}/resources/sounds/soft.wav")
 
 qt_add_resources(cadence "cadence_icons"
     PREFIX "/icons"

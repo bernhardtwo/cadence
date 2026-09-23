@@ -18,6 +18,10 @@ Rectangle {
     border.width: primary ? 0 : 1
     border.color: Theme.line
 
+    Accessible.role: Accessible.Button
+    Accessible.name: text
+    Accessible.onPressAction: root.clicked()
+
     Text {
         id: label
 

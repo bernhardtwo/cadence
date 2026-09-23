@@ -1,3 +1,4 @@
+#include "alarmsounds.hpp"
 #include "apppaths.hpp"
 #include "daycontroller.hpp"
 #include "fileprogressstore.hpp"
@@ -143,6 +144,15 @@ int main(int argc, char* argv[]) {
             showWindow(window);
         }
     });
+
+    AlarmSounds sounds;
+    QObject::connect(&controller, &DayController::alarmRaised, &sounds,
+                     [&sounds, &tray](int kind, int, const QString& title, const QString& message) {
+                         sounds.play(static_cast<DayController::Alarm>(kind));
+                         if (tray) {
+                             tray->showMessage(title, message);
+                         }
+                     });
 
     controller.startTicking();
     return QApplication::exec();

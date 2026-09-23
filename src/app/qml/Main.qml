@@ -24,6 +24,36 @@ ApplicationWindow {
         }
     }
 
+    Overlay {
+        id: overlay
+
+        // A push-up prompt arrives just before the focus end alarm of the same break.
+        property bool pushupsPending: false
+    }
+
+    Connections {
+        target: DayController
+
+        function onPushupPrompt(blockIndex, setIndex) {
+            overlay.pushupsPending = true
+            if (overlay.visible && overlay.mode === "focusEnd") {
+                overlay.showPushups = true
+            }
+        }
+
+        function onAlarmRaised(kind, blockIndex, title, message) {
+            if (kind === DayController.BlockStart) {
+                overlay.open("blockStart", blockIndex, title, message)
+            } else if (kind === DayController.PomodoroFocusEnd) {
+                overlay.open("focusEnd", blockIndex, DayController.currentName, message)
+                overlay.showPushups = overlay.pushupsPending
+                overlay.pushupsPending = false
+            } else if (kind === DayController.UnconfirmedPending) {
+                overlay.open("unconfirmed", blockIndex, title, "Did you do this?")
+            }
+        }
+    }
+
     Column {
         id: header
 
