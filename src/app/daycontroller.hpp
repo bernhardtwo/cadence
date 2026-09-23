@@ -126,7 +126,8 @@ signals:
     void pushupPrompt(int blockIndex, int setIndex);
 
 private:
-    void evaluate(cadence::core::Instant now);
+    // withAlarms is false for the constructor's pass, which runs before anything listens.
+    void evaluate(cadence::core::Instant now, bool withAlarms = true);
     void loadDay(cadence::core::Date date);
     void persist();
     void applyPomodoroEvents(const cadence::core::PomodoroEvents& events, cadence::core::Instant now);

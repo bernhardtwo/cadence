@@ -95,7 +95,7 @@ DayController::DayController(std::unique_ptr<IClock> clock, std::unique_ptr<Prog
     timer_.setInterval(1000);
     timer_.setTimerType(Qt::PreciseTimer);
     connect(&timer_, &QTimer::timeout, this, &DayController::evaluateNow);
-    evaluate(clock_->now());
+    evaluate(clock_->now(), false);
 }
 
 DayController::~DayController() {
@@ -118,13 +118,14 @@ void DayController::setInstance(DayController* instance) {
 
 void DayController::startTicking() {
     timer_.start();
+    evaluateNow();
 }
 
 void DayController::evaluateNow() {
     evaluate(clock_->now());
 }
 
-void DayController::evaluate(Instant now) {
+void DayController::evaluate(Instant now, bool withAlarms) {
     now_ = now;
     const TimePoint point = toTimePoint(now);
     if (date_ != point.date) {
@@ -139,10 +140,13 @@ void DayController::evaluate(Instant now) {
 
     if (day_) {
         plan_ = plan(*day_, progress_, point);
-        const std::vector<cadence::core::Alarm> alarms = scheduler_.evaluate(*day_, plan_, progress_, events, now);
         current_ = pickCurrent();
-        for (const cadence::core::Alarm& alarm : alarms) {
-            raise(alarm);
+        if (withAlarms) {
+            const std::vector<cadence::core::Alarm> alarms =
+                scheduler_.evaluate(*day_, plan_, progress_, events, now);
+            for (const cadence::core::Alarm& alarm : alarms) {
+                raise(alarm);
+            }
         }
     } else {
         plan_ = DayPlan{};
