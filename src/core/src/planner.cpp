@@ -17,6 +17,11 @@ const BlockProgress& progressFor(const DayProgress& progress, std::size_t index)
     return found ? *found : none;
 }
 
+// A block the user skipped, or reported as not having happened, is not part of the chain.
+bool leavesChain(const BlockProgress& progress) noexcept {
+    return progress.skipped || progress.confirmed == false;
+}
+
 Minutes pausedTotal(const BlockProgress& progress, Minutes now) noexcept {
     Minutes total{0};
     for (const PauseInterval& pause : progress.pauses) {
@@ -41,7 +46,7 @@ Minutes endOf(Minutes start, const BlockTemplate& block, const BlockProgress& pr
 
 BlockState stateOf(const BlockTemplate& block, const BlockProgress& progress, const Interval& placed, Minutes now,
                    Minutes cutoff) noexcept {
-    if (progress.skipped) {
+    if (leavesChain(progress)) {
         return BlockState::Skipped;
     }
     if (progress.actualEnd) {
@@ -50,10 +55,13 @@ BlockState stateOf(const BlockTemplate& block, const BlockProgress& progress, co
     if (progress.actualStart) {
         return BlockState::Active;
     }
+    if (progress.confirmed == true) {
+        return BlockState::Done;
+    }
     // Anchored blocks follow the clock; the other kinds only become active when the user starts them.
     if (block.kind == BlockKind::Anchored) {
         if (placed.end <= now) {
-            return BlockState::Done;
+            return BlockState::Unconfirmed;
         }
         if (placed.start <= now) {
             return BlockState::Active;
@@ -74,6 +82,26 @@ bool DayPlan::doesNotFit() const noexcept {
                        [](const PlannedBlock& block) { return block.state == BlockState::DoesNotFit; });
 }
 
+std::vector<std::size_t> DayPlan::unconfirmedBlocks() const {
+    std::vector<std::size_t> indices;
+    for (const PlannedBlock& block : blocks) {
+        if (block.state == BlockState::Unconfirmed) {
+            indices.push_back(block.templateIndex);
+        }
+    }
+    return indices;
+}
+
+Minutes DayPlan::completedMinutes() const noexcept {
+    Minutes total{0};
+    for (const PlannedBlock& block : blocks) {
+        if (block.state == BlockState::Done) {
+            total += std::max(Minutes{0}, block.end - block.start);
+        }
+    }
+    return total;
+}
+
 DayPlan plan(const DayTemplate& day, const DayProgress& progress, TimePoint nowPoint) {
     const Minutes now = nowPoint.minuteOfDay;
     const std::size_t count = day.blocks.size();
@@ -84,7 +112,7 @@ DayPlan plan(const DayTemplate& day, const DayProgress& progress, TimePoint nowP
     for (std::size_t i = 0; i < count; ++i) {
         const BlockTemplate& block = day.blocks[i];
         const BlockProgress& prog = progressFor(progress, i);
-        if (block.kind != BlockKind::Anchored || prog.skipped) {
+        if (block.kind != BlockKind::Anchored || leavesChain(prog)) {
             continue;
         }
         const Minutes start = block.start.value_or(day.dayStart);
@@ -100,7 +128,7 @@ DayPlan plan(const DayTemplate& day, const DayProgress& progress, TimePoint nowP
     for (std::size_t i = 0; i < count; ++i) {
         const BlockTemplate& block = day.blocks[i];
         const BlockProgress& prog = progressFor(progress, i);
-        if (block.kind == BlockKind::Soft || prog.skipped) {
+        if (block.kind == BlockKind::Soft || leavesChain(prog)) {
             continue;
         }
         if (block.kind == BlockKind::Flexible && prog.postponed) {
@@ -146,7 +174,7 @@ DayPlan plan(const DayTemplate& day, const DayProgress& progress, TimePoint nowP
     for (std::size_t i = 0; i < count; ++i) {
         const BlockTemplate& block = day.blocks[i];
         const BlockProgress& prog = progressFor(progress, i);
-        if (prog.skipped) {
+        if (leavesChain(prog)) {
             const Minutes at = block.start.value_or(cursor);
             placed[i] = Interval{at, at};
             continue;

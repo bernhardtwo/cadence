@@ -16,6 +16,9 @@ enum class BlockState {
     Upcoming,
     Skipped,
     DoesNotFit,
+    // An anchored block whose time has passed without the user touching it. The app asks whether it
+    // happened; until then it counts toward nothing.
+    Unconfirmed,
 };
 
 struct PauseInterval {
@@ -33,6 +36,8 @@ struct BlockProgress {
     bool skipped = false;
     bool postponed = false;
     Minutes extended{0};
+    // Resolves an Unconfirmed block: true means it happened (Done), false means it did not (Skipped).
+    std::optional<bool> confirmed;
 
     friend bool operator==(const BlockProgress&, const BlockProgress&) = default;
 };
@@ -61,6 +66,10 @@ struct DayPlan {
     std::vector<PlannedBlock> blocks;
 
     bool doesNotFit() const noexcept;
+    // Template indices of blocks waiting for the user to say whether they happened.
+    std::vector<std::size_t> unconfirmedBlocks() const;
+    // Sum of the planned length of Done blocks, the basis for any statistics.
+    Minutes completedMinutes() const noexcept;
     const PlannedBlock& at(std::size_t templateIndex) const { return blocks.at(templateIndex); }
 };
 

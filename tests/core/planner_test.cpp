@@ -229,8 +229,66 @@ TEST_CASE("an active block that runs late pushes the blocks after it", "[planner
 TEST_CASE("an unstarted flexible block never starts in the past", "[planner]") {
     const DayPlan result = plan(weekday(), DayProgress{}, at(15, 20));
 
-    expectBlock(result, 0, timeOfDay(8, 30), timeOfDay(15, 0), BlockState::Done);
+    expectBlock(result, 0, timeOfDay(8, 30), timeOfDay(15, 0), BlockState::Unconfirmed);
     expectBlock(result, 1, timeOfDay(15, 20), timeOfDay(16, 20), BlockState::Upcoming);
+}
+
+TEST_CASE("an untouched anchored block whose time has passed is unconfirmed", "[planner]") {
+    SECTION("it is listed for the app to ask about and counts toward nothing") {
+        const DayPlan result = plan(weekday(), DayProgress{}, at(15, 20));
+
+        CHECK(result.at(0).state == BlockState::Unconfirmed);
+        CHECK(result.unconfirmedBlocks() == std::vector<std::size_t>{0});
+        CHECK(result.completedMinutes() == 0min);
+    }
+
+    SECTION("confirming it makes it done and counts its planned length") {
+        DayProgress progress;
+        progress.at(0).confirmed = true;
+        const DayPlan result = plan(weekday(), progress, at(15, 20));
+
+        expectBlock(result, 0, timeOfDay(8, 30), timeOfDay(15, 0), BlockState::Done);
+        CHECK(result.unconfirmedBlocks().empty());
+        CHECK(result.completedMinutes() == 390min);
+    }
+
+    SECTION("denying it makes it skipped") {
+        DayProgress progress;
+        progress.at(0).confirmed = false;
+        const DayPlan result = plan(weekday(), progress, at(15, 20));
+
+        CHECK(result.at(0).state == BlockState::Skipped);
+        CHECK(result.unconfirmedBlocks().empty());
+        CHECK(result.completedMinutes() == 0min);
+    }
+
+    SECTION("a block still running at the clock is active, not unconfirmed") {
+        const DayPlan result = plan(weekday(), DayProgress{}, at(14, 59));
+        CHECK(result.at(0).state == BlockState::Active);
+        CHECK(result.unconfirmedBlocks().empty());
+    }
+
+    SECTION("flexible blocks are never unconfirmed") {
+        DayProgress progress;
+        progress.at(0).confirmed = true;
+        const DayPlan result = plan(weekday(), progress, at(22, 30));
+        CHECK(result.at(1).state == BlockState::DoesNotFit);
+        CHECK(result.unconfirmedBlocks().empty());
+    }
+}
+
+TEST_CASE("completed minutes only count blocks that are done", "[planner]") {
+    DayProgress progress;
+    progress.at(0).confirmed = true;
+    progress.at(1).actualStart = timeOfDay(15, 0);
+    progress.at(1).actualEnd = timeOfDay(15, 45);
+    progress.at(2).actualStart = timeOfDay(15, 45);
+
+    const DayPlan result = plan(weekday(), progress, at(16, 0));
+
+    CHECK(result.at(1).state == BlockState::Done);
+    CHECK(result.at(2).state == BlockState::Active);
+    CHECK(result.completedMinutes() == 390min + 45min);
 }
 
 TEST_CASE("finished blocks keep their actual times and the chain continues from them", "[planner]") {
