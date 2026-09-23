@@ -81,8 +81,8 @@ TEST_CASE("an untouched day at day start matches the template", "[planner]") {
     REQUIRE(result.blocks.size() == 5);
     expectBlock(result, 0, timeOfDay(8, 30), timeOfDay(15, 0), BlockState::Active);
     expectBlock(result, 1, timeOfDay(15, 0), timeOfDay(16, 0), BlockState::Upcoming);
-    expectBlock(result, 2, timeOfDay(16, 0), timeOfDay(17, 0), BlockState::Upcoming);
-    expectBlock(result, 3, timeOfDay(17, 0), timeOfDay(17, 30), BlockState::Upcoming);
+    expectBlock(result, 2, timeOfDay(16, 0), timeOfDay(16, 55), BlockState::Upcoming);
+    expectBlock(result, 3, timeOfDay(16, 55), timeOfDay(17, 20), BlockState::Upcoming);
     expectBlock(result, 4, timeOfDay(21, 0), timeOfDay(21, 30), BlockState::Upcoming);
     CHECK_FALSE(result.doesNotFit());
 }
@@ -135,7 +135,7 @@ TEST_CASE("an extended anchored block moves its end and reflows the chain", "[pl
 
     expectBlock(result, 0, timeOfDay(8, 30), timeOfDay(15, 30), BlockState::Active);
     expectBlock(result, 1, timeOfDay(15, 30), timeOfDay(16, 30), BlockState::Upcoming);
-    expectBlock(result, 2, timeOfDay(16, 30), timeOfDay(17, 30), BlockState::Upcoming);
+    expectBlock(result, 2, timeOfDay(16, 30), timeOfDay(17, 25), BlockState::Upcoming);
 }
 
 TEST_CASE("a flexible block that would overlap an anchored block moves entirely after it", "[planner]") {
@@ -156,8 +156,8 @@ TEST_CASE("a skipped block leaves the chain", "[planner]") {
     const DayPlan result = plan(weekday(), progress, at(8, 30));
 
     CHECK(result.at(1).state == BlockState::Skipped);
-    expectBlock(result, 2, timeOfDay(15, 0), timeOfDay(16, 0), BlockState::Upcoming);
-    expectBlock(result, 3, timeOfDay(16, 0), timeOfDay(16, 30), BlockState::Upcoming);
+    expectBlock(result, 2, timeOfDay(15, 0), timeOfDay(15, 55), BlockState::Upcoming);
+    expectBlock(result, 3, timeOfDay(15, 55), timeOfDay(16, 20), BlockState::Upcoming);
 }
 
 TEST_CASE("a postponed block moves to the end of the flexible chain", "[planner]") {
@@ -166,9 +166,9 @@ TEST_CASE("a postponed block moves to the end of the flexible chain", "[planner]
 
     const DayPlan result = plan(weekday(), progress, at(8, 30));
 
-    expectBlock(result, 2, timeOfDay(15, 0), timeOfDay(16, 0), BlockState::Upcoming);
-    expectBlock(result, 3, timeOfDay(16, 0), timeOfDay(16, 30), BlockState::Upcoming);
-    expectBlock(result, 1, timeOfDay(16, 30), timeOfDay(17, 30), BlockState::Upcoming);
+    expectBlock(result, 2, timeOfDay(15, 0), timeOfDay(15, 55), BlockState::Upcoming);
+    expectBlock(result, 3, timeOfDay(15, 55), timeOfDay(16, 20), BlockState::Upcoming);
+    expectBlock(result, 1, timeOfDay(16, 20), timeOfDay(17, 20), BlockState::Upcoming);
 }
 
 TEST_CASE("blocks that end after the cutoff do not fit", "[planner]") {

@@ -2,12 +2,27 @@
 
 namespace cadence::core {
 
+Minutes pomodoroDuration(const PomodoroPlan& plan, int count) noexcept {
+    if (count <= 0) {
+        return Minutes{0};
+    }
+    Minutes total = plan.focus * count;
+    for (int session = 1; session < count; ++session) {
+        const bool longBreak = plan.longBreakEvery > 0 && session % plan.longBreakEvery == 0;
+        total += longBreak ? plan.longBreak : plan.shortBreak;
+    }
+    return total;
+}
+
 int derivePomodoroCount(const PomodoroPlan& plan, Minutes duration) noexcept {
-    const Minutes cycle = plan.focus + plan.shortBreak;
-    if (cycle <= Minutes{0} || duration <= Minutes{0}) {
+    if (plan.focus <= Minutes{0} || duration <= Minutes{0}) {
         return 0;
     }
-    return static_cast<int>(duration / cycle);
+    int count = 0;
+    while (pomodoroDuration(plan, count + 1) <= duration) {
+        ++count;
+    }
+    return count;
 }
 
 std::optional<Minutes> resolvedDuration(const BlockTemplate& block) noexcept {
@@ -15,7 +30,7 @@ std::optional<Minutes> resolvedDuration(const BlockTemplate& block) noexcept {
         return block.durationMinutes;
     }
     if (block.pomodoro && block.pomodoro->count) {
-        return (block.pomodoro->focus + block.pomodoro->shortBreak) * *block.pomodoro->count;
+        return pomodoroDuration(*block.pomodoro, *block.pomodoro->count);
     }
     return std::nullopt;
 }

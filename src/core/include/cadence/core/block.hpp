@@ -42,7 +42,11 @@ struct BlockTemplate {
     friend bool operator==(const BlockTemplate&, const BlockTemplate&) = default;
 };
 
-// floor(duration / (focus + shortBreak)); long breaks are not part of the derivation.
+// Wall time of `count` sessions: every focus plus the breaks between them. The break after session
+// k (1-based) is long when k is a multiple of longBreakEvery; there is no break after the last one.
+Minutes pomodoroDuration(const PomodoroPlan& plan, int count) noexcept;
+
+// The largest count whose pomodoroDuration fits in the duration.
 int derivePomodoroCount(const PomodoroPlan& plan, Minutes duration) noexcept;
 
 // The explicit duration, else the length of the pomodoro plan when it has an explicit count.

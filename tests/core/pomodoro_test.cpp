@@ -50,22 +50,45 @@ std::vector<PomodoroState> phaseSequence(PomodoroSession& session, FakeClock& cl
 
 } // namespace
 
-TEST_CASE("pomodoro count is derived from the block duration", "[pomodoro]") {
+TEST_CASE("pomodoro duration counts focus time and the breaks between sessions", "[pomodoro]") {
     const PomodoroPlan plan;
-    CHECK(derivePomodoroCount(plan, 390min) == 13);
-    CHECK(derivePomodoroCount(plan, 59min) == 1);
-    CHECK(derivePomodoroCount(plan, 29min) == 0);
+    CHECK(pomodoroDuration(plan, 0) == 0min);
+    CHECK(pomodoroDuration(plan, 1) == 25min);
+    CHECK(pomodoroDuration(plan, 2) == 55min);
+    CHECK(pomodoroDuration(plan, 4) == 115min);
+    CHECK(pomodoroDuration(plan, 5) == 155min);
+    CHECK(pomodoroDuration(plan, 12) == 375min);
+    CHECK(pomodoroDuration(plan, 13) == 415min);
+
+    PomodoroPlan noLongBreaks;
+    noLongBreaks.longBreakEvery = 0;
+    CHECK(pomodoroDuration(noLongBreaks, 5) == 145min);
+}
+
+TEST_CASE("pomodoro count is the largest number of sessions that fits the duration", "[pomodoro]") {
+    const PomodoroPlan plan;
+    CHECK(derivePomodoroCount(plan, 390min) == 12);
+    CHECK(derivePomodoroCount(plan, 375min) == 12);
+    CHECK(derivePomodoroCount(plan, 374min) == 11);
+    CHECK(derivePomodoroCount(plan, 59min) == 2);
+    CHECK(derivePomodoroCount(plan, 29min) == 1);
+    CHECK(derivePomodoroCount(plan, 24min) == 0);
 
     BlockTemplate work;
     work.pomodoro = plan;
     work.durationMinutes = 390min;
-    CHECK(resolvedPomodoroCount(work) == 13);
+    CHECK(resolvedPomodoroCount(work) == 12);
 
     BlockTemplate french;
     french.pomodoro = plan;
     french.pomodoro->count = 2;
     CHECK(resolvedPomodoroCount(french) == 2);
-    CHECK(resolvedDuration(french) == 60min);
+    CHECK(resolvedDuration(french) == 55min);
+
+    BlockTemplate logic;
+    logic.pomodoro = plan;
+    logic.pomodoro->count = 1;
+    CHECK(resolvedDuration(logic) == 25min);
 
     BlockTemplate plain;
     plain.durationMinutes = 45min;

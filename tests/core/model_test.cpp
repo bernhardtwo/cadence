@@ -73,7 +73,7 @@ TEST_CASE("block duration resolves from the explicit value or the pomodoro count
     CHECK_FALSE(resolvedDuration(block).has_value());
 
     block.pomodoro->count = 3;
-    CHECK(resolvedDuration(block) == 90min);
+    CHECK(resolvedDuration(block) == 85min);
 
     block.durationMinutes = 100min;
     CHECK(resolvedDuration(block) == 100min);

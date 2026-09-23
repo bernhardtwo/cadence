@@ -73,7 +73,8 @@ TEST_CASE("the shipped default template describes the weekday from the spec", "[
     CHECK(work.pomodoro->longBreak == 15min);
     CHECK(work.pomodoro->longBreakEvery == 4);
     CHECK_FALSE(work.pomodoro->count.has_value());
-    CHECK(resolvedPomodoroCount(work) == 13);
+    CHECK(resolvedPomodoroCount(work) == 12);
+    CHECK(pomodoroDuration(*work.pomodoro, 12) == 375min);
     CHECK(work.pushupsOnBreak);
 
     const BlockTemplate& lunch = day.blocks[1];
