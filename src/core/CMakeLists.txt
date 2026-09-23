@@ -1,5 +1,6 @@
 add_library(cadence_core STATIC
     include/cadence/core/activity.hpp
+    include/cadence/core/alarm.hpp
     include/cadence/core/block.hpp
     include/cadence/core/clock.hpp
     include/cadence/core/planner.hpp
@@ -8,6 +9,7 @@ add_library(cadence_core STATIC
     include/cadence/core/template_json.hpp
     include/cadence/core/time.hpp
     include/cadence/core/version.hpp
+    src/alarm.cpp
     src/block.cpp
     src/planner.cpp
     src/pomodoro.cpp
