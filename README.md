@@ -10,8 +10,19 @@ the things you glance at and a quiet grotesk for everything else.
 
 ## Status
 
-Milestone 1: repository scaffold, build system, continuous integration and a minimal running window.
-Scheduling, alarms, the tray icon and music integration are not implemented yet.
+Milestone 3: Cadence lives in the tray on a real day. The scheduling engine plans the day from a
+weekly template, alarms fire from the wall clock with sound, a tray notification and a full screen
+overlay, progress is saved per day, and the app can launch at login. The window is a minimal live
+view; the full Signal interface is the next milestone. Music integration is not implemented yet.
+
+### Running it
+
+- The weekly template is copied to your config directory on first start
+  (`templates/week.json` under the Cadence app config location) and edited there.
+- Progress is written per day under the app data location, in `progress/YYYY-MM-DD.json`.
+- Closing the window hides Cadence to the tray; Quit in the tray menu exits.
+- `cadence --minimized` starts hidden in the tray. `--enable-autostart` and `--disable-autostart`
+  register or remove launch at login and exit; the tray menu toggles the same setting.
 
 ## Screenshots
 
@@ -76,9 +87,11 @@ open build/macos-release/bin/cadence.app
 ## Project layout
 
 ```
-src/core    Pure C++20 static library with no Qt dependency. Domain logic lives here.
-src/app     Qt Quick executable, QML modules and bundled fonts.
-tests       Catch2 test suites for the core library.
+src/core      Pure C++20 static library with no Qt dependency. Planner, pomodoro, alarms, JSON.
+src/platform  Launch at login for Windows, Linux and macOS.
+src/app       Qt Quick executable, QML modules, tray icon and bundled fonts.
+resources     Default weekly template and the alarm sounds.
+tests         Catch2 test suites for the core and platform libraries.
 ```
 
 ## Fonts
