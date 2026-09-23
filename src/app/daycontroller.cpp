@@ -1,6 +1,7 @@
 #include "daycontroller.hpp"
 
 #include <QDate>
+#include <QStringList>
 #include <QVariantMap>
 #include <QtLogging>
 
@@ -121,6 +122,37 @@ void DayController::startTicking() {
     evaluateNow();
 }
 
+void DayController::setDocument(std::optional<TemplateDocument> document, QString templateError) {
+    document_ = std::move(document);
+    templateError_ = std::move(templateError);
+    day_.reset();
+    if (document_ && date_) {
+        const Weekday weekday{std::chrono::local_days{*date_}};
+        if (const auto& day = document_->week.day(weekday)) {
+            day_ = *day;
+        }
+    }
+    // A session tied to a block that no longer has a plan would tick against nothing.
+    if (session_) {
+        const BlockTemplate* tpl = block(sessionBlock_);
+        if (tpl == nullptr || !tpl->pomodoro) {
+            session_.reset();
+        }
+    }
+    evaluate(clock_->now());
+}
+
+void DayController::setMaxSnoozes(int limit) {
+    AlarmPolicy policy = scheduler_.policy();
+    policy.maxSnoozes = std::max(0, limit);
+    scheduler_.setPolicy(policy);
+    emit changed();
+}
+
+void DayController::setWarnDayNoLongerFits(bool warn) {
+    warnDayNoLongerFits_ = warn;
+}
+
 void DayController::evaluateNow() {
     evaluate(clock_->now());
 }
@@ -211,6 +243,9 @@ void DayController::applyPomodoroEvents(const PomodoroEvents& events, Instant no
 }
 
 void DayController::raise(const cadence::core::Alarm& alarm) {
+    if (alarm.kind == AlarmKind::DayNoLongerFits && !warnDayNoLongerFits_) {
+        return;
+    }
     const int index = alarm.blockIndex ? static_cast<int>(*alarm.blockIndex) : -1;
     const QString name = index >= 0 ? blockName(index) : QString();
     QString title;
@@ -292,6 +327,17 @@ const BlockTemplate* DayController::block(std::size_t index) const {
     return &day_->blocks[index];
 }
 
+QString DayController::activityColor(const ActivityId& id) const {
+    if (document_) {
+        for (const Activity& activity : document_->activities) {
+            if (activity.id == id) {
+                return QString::fromStdString(activity.color);
+            }
+        }
+    }
+    return {};
+}
+
 QString DayController::activityName(const ActivityId& id) const {
     if (document_) {
         for (const Activity& activity : document_->activities) {
@@ -316,6 +362,33 @@ QString DayController::formatDuration(int seconds) {
         return u"%1:%2:%3"_s.arg(hours).arg(minutes, 2, 10, QChar(u'0')).arg(secs, 2, 10, QChar(u'0'));
     }
     return u"%1:%2"_s.arg(minutes, 2, 10, QChar(u'0')).arg(secs, 2, 10, QChar(u'0'));
+}
+
+QString DayController::formatClock(int minutes) {
+    const int clamped = std::max(0, minutes);
+    return u"%1:%2"_s.arg(clamped / 60).arg(clamped % 60, 2, 10, QChar(u'0'));
+}
+
+QString DayController::formatMinutes(int minutes) const {
+    return formatClock(minutes);
+}
+
+// The right hand text of a plan row: length, pomodoro count and whether breaks ask for push-ups.
+QString DayController::blockDetail(std::size_t index, const PlannedBlock& planned) const {
+    const BlockTemplate* tpl = block(index);
+    if (tpl == nullptr) {
+        return {};
+    }
+    QStringList parts;
+    const int minutes = static_cast<int>((planned.end - planned.start).count());
+    parts.push_back(minutes >= 60 ? u"%1 h"_s.arg(formatClock(minutes)) : u"%1 min"_s.arg(minutes));
+    if (const auto count = resolvedPomodoroCount(*tpl); count && *count > 0) {
+        parts.push_back(*count == 1 ? u"1 pomodoro"_s : u"%1 pomodoros"_s.arg(*count));
+    }
+    if (tpl->pushupsOnBreak) {
+        parts.push_back(u"push-ups"_s);
+    }
+    return parts.join(u" · "_s);
 }
 
 QString DayController::dateText() const {
@@ -378,6 +451,18 @@ QString DayController::remainingText() const {
     return formatDuration(remainingSeconds());
 }
 
+QString DayController::currentStartText() const {
+    return current_ ? timeText(plan_.at(*current_).start) : QString();
+}
+
+QString DayController::currentEndText() const {
+    return current_ ? timeText(plan_.at(*current_).end) : QString();
+}
+
+bool DayController::currentActive() const {
+    return current_ && plan_.at(*current_).state == BlockState::Active;
+}
+
 bool DayController::hasPomodoro() const {
     return session_.has_value() && current_ && sessionBlock_ == *current_;
 }
@@ -402,6 +487,89 @@ int DayController::pomodoroRemainingSeconds() const {
     return hasPomodoro() ? static_cast<int>(session_->remaining(now_).count()) : 0;
 }
 
+int DayController::pomodorosDone() const {
+    return hasPomodoro() ? session_->completedSessions() : 0;
+}
+
+bool DayController::pomodoroOnBreak() const {
+    if (!hasPomodoro()) {
+        return false;
+    }
+    const PomodoroState state = session_->state();
+    return state == PomodoroState::ShortBreak || state == PomodoroState::LongBreak;
+}
+
+QString DayController::nextBreakText() const {
+    if (!hasPomodoro()) {
+        return {};
+    }
+    const PomodoroPlan& plan = session_->plan();
+    const int done = session_->completedSessions();
+    const PomodoroState state = session_->state();
+    if (state == PomodoroState::Completed) {
+        return u"all done"_s;
+    }
+    if (state == PomodoroState::ShortBreak || state == PomodoroState::LongBreak) {
+        return u"on a break"_s;
+    }
+    // The break after the running session; the last session ends the block instead.
+    const int session = done + 1;
+    if (session >= session_->totalCount()) {
+        return u"last one"_s;
+    }
+    const bool longBreak = plan.longBreakEvery > 0 && session % plan.longBreakEvery == 0;
+    const Minutes length = longBreak ? plan.longBreak : plan.shortBreak;
+    QString text = u"next break: %1 min"_s.arg(length.count());
+    if (session_->pushupsOnBreak()) {
+        text += u" + push-ups"_s;
+    }
+    return text;
+}
+
+int DayController::doneMinutes() const {
+    Minutes total = plan_.completedMinutes();
+    const Minutes now = nowMinute();
+    for (const PlannedBlock& planned : plan_.blocks) {
+        if (planned.state != BlockState::Active) {
+            continue;
+        }
+        Minutes elapsed = std::clamp(now, planned.start, planned.end) - planned.start;
+        if (const BlockProgress* prog = progress_.find(planned.templateIndex)) {
+            for (const PauseInterval& pause : prog->pauses) {
+                elapsed -= std::max(Minutes{0}, pause.end.value_or(now) - pause.start);
+            }
+        }
+        total += std::max(Minutes{0}, elapsed);
+    }
+    return static_cast<int>(total.count());
+}
+
+int DayController::plannedMinutes() const {
+    Minutes total{0};
+    for (const PlannedBlock& planned : plan_.blocks) {
+        if (planned.state != BlockState::Skipped) {
+            total += std::max(Minutes{0}, planned.end - planned.start);
+        }
+    }
+    return static_cast<int>(total.count());
+}
+
+int DayController::pushupsToday() const {
+    int total = 0;
+    for (const PushupSet& set : progress_.pushups) {
+        total += set.reps;
+    }
+    return total;
+}
+
+QString DayController::summaryText() const {
+    if (!day_) {
+        return {};
+    }
+    return u"Work %1 / %2 · Push-ups %3"_s.arg(formatClock(doneMinutes()), formatClock(plannedMinutes()))
+        .arg(pushupsToday());
+}
+
 QVariantList DayController::planList() const {
     QVariantList list;
     for (const PlannedBlock& planned : plan_.blocks) {
@@ -418,6 +586,12 @@ QVariantList DayController::planList() const {
         row[u"state"_s] = stateName(planned.state);
         row[u"overrunsCutoff"_s] = planned.overrunsCutoff;
         row[u"current"_s] = current_ && *current_ == planned.templateIndex;
+        row[u"durationMinutes"_s] =
+            static_cast<int>(std::max(Minutes{0}, planned.end - planned.start).count());
+        row[u"pomodoros"_s] = resolvedPomodoroCount(*tpl).value_or(0);
+        row[u"pushups"_s] = tpl->pushupsOnBreak;
+        row[u"detail"_s] = blockDetail(planned.templateIndex, planned);
+        row[u"color"_s] = activityColor(tpl->activityId);
         list.push_back(row);
     }
     return list;
@@ -462,6 +636,14 @@ bool DayController::canPostpone() const {
 
 bool DayController::canFinish() const {
     return running();
+}
+
+bool DayController::canExtend() const {
+    if (!current_) {
+        return false;
+    }
+    const BlockState state = plan_.at(*current_).state;
+    return state == BlockState::Active || state == BlockState::Upcoming;
 }
 
 void DayController::start() {
@@ -603,4 +785,9 @@ QString DayController::blockName(int blockIndex) const {
 bool DayController::blockWantsPushups(int blockIndex) const {
     const BlockTemplate* tpl = blockIndex >= 0 ? block(static_cast<std::size_t>(blockIndex)) : nullptr;
     return tpl && tpl->pushupsOnBreak;
+}
+
+bool DayController::blockFullscreenAlarm(int blockIndex) const {
+    const BlockTemplate* tpl = blockIndex >= 0 ? block(static_cast<std::size_t>(blockIndex)) : nullptr;
+    return tpl && tpl->fullscreenAlarm;
 }

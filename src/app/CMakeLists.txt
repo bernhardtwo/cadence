@@ -31,17 +31,28 @@ set_target_properties(cadence PROPERTIES
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE)
 
-set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
-set_source_files_properties(qml/SignalButton.qml PROPERTIES QT_RESOURCE_ALIAS SignalButton.qml)
-set_source_files_properties(qml/Overlay.qml PROPERTIES QT_RESOURCE_ALIAS Overlay.qml)
+set(CADENCE_QML_FILES
+    qml/BlockBar.qml
+    qml/Main.qml
+    qml/NavPill.qml
+    qml/Overlay.qml
+    qml/PomodoroGrid.qml
+    qml/SettingsScreen.qml
+    qml/SignalButton.qml
+    qml/StatsScreen.qml
+    qml/TemplatesScreen.qml
+    qml/TodayScreen.qml
+    qml/TopBar.qml)
+
+foreach(qml_file IN LISTS CADENCE_QML_FILES)
+    get_filename_component(qml_name "${qml_file}" NAME)
+    set_source_files_properties("${qml_file}" PROPERTIES QT_RESOURCE_ALIAS "${qml_name}")
+endforeach()
 
 qt_add_qml_module(cadence
     URI Cadence
     VERSION 1.0
-    QML_FILES
-        qml/Main.qml
-        qml/Overlay.qml
-        qml/SignalButton.qml
+    QML_FILES ${CADENCE_QML_FILES}
     OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml/Cadence"
     IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
 

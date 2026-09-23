@@ -46,7 +46,14 @@ QString instanceKey() {
     if (user.isEmpty()) {
         user = QString::fromLocal8Bit(qgetenv("USER"));
     }
-    return u"cadence-"_s + user;
+    QString key = u"cadence-"_s + user;
+#ifdef QT_DEBUG
+    // A test session against its own data directory must not wake the real instance instead.
+    if (!qgetenv("CADENCE_TEST_DATA_DIR").isEmpty()) {
+        key += u"-test"_s;
+    }
+#endif
+    return key;
 }
 
 void showWindow(QQuickWindow* window) {

@@ -37,11 +37,21 @@ class DayController : public QObject {
     Q_PROPERTY(bool paused READ paused NOTIFY changed)
     Q_PROPERTY(int remainingSeconds READ remainingSeconds NOTIFY changed)
     Q_PROPERTY(QString remainingText READ remainingText NOTIFY changed)
+    Q_PROPERTY(QString currentStartText READ currentStartText NOTIFY changed)
+    Q_PROPERTY(QString currentEndText READ currentEndText NOTIFY changed)
+    Q_PROPERTY(bool currentActive READ currentActive NOTIFY changed)
     Q_PROPERTY(bool hasPomodoro READ hasPomodoro NOTIFY changed)
     Q_PROPERTY(int pomodoroIndex READ pomodoroIndex NOTIFY changed)
     Q_PROPERTY(int pomodoroTotal READ pomodoroTotal NOTIFY changed)
     Q_PROPERTY(QString pomodoroPhase READ pomodoroPhase NOTIFY changed)
     Q_PROPERTY(int pomodoroRemainingSeconds READ pomodoroRemainingSeconds NOTIFY changed)
+    Q_PROPERTY(int pomodorosDone READ pomodorosDone NOTIFY changed)
+    Q_PROPERTY(bool pomodoroOnBreak READ pomodoroOnBreak NOTIFY changed)
+    Q_PROPERTY(QString nextBreakText READ nextBreakText NOTIFY changed)
+    Q_PROPERTY(int doneMinutes READ doneMinutes NOTIFY changed)
+    Q_PROPERTY(int plannedMinutes READ plannedMinutes NOTIFY changed)
+    Q_PROPERTY(int pushupsToday READ pushupsToday NOTIFY changed)
+    Q_PROPERTY(QString summaryText READ summaryText NOTIFY changed)
     Q_PROPERTY(QVariantList plan READ planList NOTIFY changed)
     Q_PROPERTY(bool doesNotFit READ doesNotFit NOTIFY changed)
     Q_PROPERTY(QVariantList overrunsCutoff READ overrunsCutoff NOTIFY changed)
@@ -52,6 +62,7 @@ class DayController : public QObject {
     Q_PROPERTY(bool canSkip READ canSkip NOTIFY changed)
     Q_PROPERTY(bool canPostpone READ canPostpone NOTIFY changed)
     Q_PROPERTY(bool canFinish READ canFinish NOTIFY changed)
+    Q_PROPERTY(bool canExtend READ canExtend NOTIFY changed)
 
 public:
     enum Alarm {
@@ -76,6 +87,14 @@ public:
 
     void startTicking();
 
+    // Swaps the week template under a running day. Today's progress is kept; the plan, the alarms
+    // and the pomodoro session re-derive from the new blocks on the next evaluation.
+    void setDocument(std::optional<cadence::core::TemplateDocument> document, QString templateError);
+    const std::optional<cadence::core::TemplateDocument>& document() const { return document_; }
+
+    void setMaxSnoozes(int limit);
+    void setWarnDayNoLongerFits(bool warn);
+
     QString templateError() const { return templateError_; }
     QString storageError() const { return storageError_; }
     QString dateText() const;
@@ -88,11 +107,21 @@ public:
     bool paused() const;
     int remainingSeconds() const;
     QString remainingText() const;
+    QString currentStartText() const;
+    QString currentEndText() const;
+    bool currentActive() const;
     bool hasPomodoro() const;
     int pomodoroIndex() const;
     int pomodoroTotal() const;
     QString pomodoroPhase() const;
     int pomodoroRemainingSeconds() const;
+    int pomodorosDone() const;
+    bool pomodoroOnBreak() const;
+    QString nextBreakText() const;
+    int doneMinutes() const;
+    int plannedMinutes() const;
+    int pushupsToday() const;
+    QString summaryText() const;
     QVariantList planList() const;
     bool doesNotFit() const { return plan_.doesNotFit(); }
     QVariantList overrunsCutoff() const;
@@ -103,6 +132,7 @@ public:
     bool canSkip() const;
     bool canPostpone() const;
     bool canFinish() const;
+    bool canExtend() const;
 
     Q_INVOKABLE void start();
     Q_INVOKABLE void pause();
@@ -118,6 +148,8 @@ public:
     Q_INVOKABLE bool canSnooze(int blockIndex) const;
     Q_INVOKABLE QString blockName(int blockIndex) const;
     Q_INVOKABLE bool blockWantsPushups(int blockIndex) const;
+    Q_INVOKABLE bool blockFullscreenAlarm(int blockIndex) const;
+    Q_INVOKABLE QString formatMinutes(int minutes) const;
     Q_INVOKABLE void evaluateNow();
 
 signals:
@@ -137,8 +169,11 @@ private:
     std::optional<std::size_t> pickCurrent() const;
     const cadence::core::BlockTemplate* block(std::size_t index) const;
     QString activityName(const cadence::core::ActivityId& id) const;
+    QString activityColor(const cadence::core::ActivityId& id) const;
     cadence::core::Minutes nowMinute() const;
     static QString formatDuration(int seconds);
+    static QString formatClock(int minutes);
+    QString blockDetail(std::size_t index, const cadence::core::PlannedBlock& planned) const;
 
     std::unique_ptr<cadence::core::IClock> clock_;
     std::unique_ptr<ProgressStore> store_;
@@ -156,4 +191,5 @@ private:
     std::size_t sessionBlock_ = 0;
     std::optional<std::size_t> current_;
     cadence::core::Instant now_{};
+    bool warnDayNoLongerFits_ = true;
 };
