@@ -31,7 +31,8 @@ progress files:
 - `CADENCE_TEST_DATA_DIR`: directory that replaces both the config and the data directory.
 
 A test session also uses its own single instance key and a no-op launch at login registration, so it
-never wakes or reconfigures the copy you actually use. Release builds ignore both variables.
+never wakes or reconfigures the copy you actually use. Release builds ignore both variables. A
+`--profile` option that works in every build is planned to replace them; see `docs/follow-ups.md`.
 
 ## Commit messages
 
