@@ -63,8 +63,9 @@ jobs:
         with:
           arch: x64
 
+      # 4.4.x uses the "$/action" self-repository syntax, which the Windows runner does not accept yet.
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@v4.3.1
         with:
           version: 6.11.2
           arch: ${{ matrix.qt_arch }}
