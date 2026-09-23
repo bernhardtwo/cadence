@@ -92,6 +92,16 @@ std::vector<std::size_t> DayPlan::unconfirmedBlocks() const {
     return indices;
 }
 
+std::vector<std::size_t> DayPlan::overrunsCutoff() const {
+    std::vector<std::size_t> indices;
+    for (const PlannedBlock& block : blocks) {
+        if (block.overrunsCutoff) {
+            indices.push_back(block.templateIndex);
+        }
+    }
+    return indices;
+}
+
 Minutes DayPlan::completedMinutes() const noexcept {
     Minutes total{0};
     for (const PlannedBlock& block : blocks) {
@@ -191,8 +201,9 @@ DayPlan plan(const DayTemplate& day, const DayProgress& progress, TimePoint nowP
     result.blocks.reserve(count);
     for (std::size_t i = 0; i < count; ++i) {
         const BlockProgress& prog = progressFor(progress, i);
-        result.blocks.push_back(PlannedBlock{i, placed[i].start, placed[i].end,
-                                             stateOf(day.blocks[i], prog, placed[i], now, day.dayCutoff)});
+        const BlockState state = stateOf(day.blocks[i], prog, placed[i], now, day.dayCutoff);
+        const bool overruns = state == BlockState::Active && placed[i].end > day.dayCutoff;
+        result.blocks.push_back(PlannedBlock{i, placed[i].start, placed[i].end, state, overruns});
     }
     return result;
 }

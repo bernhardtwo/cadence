@@ -57,6 +57,8 @@ struct PlannedBlock {
     Minutes start;
     Minutes end;
     BlockState state;
+    // An Active block that will end after the day cutoff. It keeps its state; the app warns instead.
+    bool overrunsCutoff = false;
 
     friend bool operator==(const PlannedBlock&, const PlannedBlock&) = default;
 };
@@ -68,6 +70,8 @@ struct DayPlan {
     bool doesNotFit() const noexcept;
     // Template indices of blocks waiting for the user to say whether they happened.
     std::vector<std::size_t> unconfirmedBlocks() const;
+    // Template indices of Active blocks that will end after the cutoff. Independent of doesNotFit().
+    std::vector<std::size_t> overrunsCutoff() const;
     // Sum of the planned length of Done blocks, the basis for any statistics.
     Minutes completedMinutes() const noexcept;
     const PlannedBlock& at(std::size_t templateIndex) const { return blocks.at(templateIndex); }

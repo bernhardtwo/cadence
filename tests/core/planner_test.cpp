@@ -185,6 +185,33 @@ TEST_CASE("blocks that end after the cutoff do not fit", "[planner]") {
     CHECK(result.doesNotFit());
 }
 
+TEST_CASE("an active block that will end after the cutoff is flagged, not marked DoesNotFit", "[planner]") {
+    DayTemplate day;
+    day.dayStart = timeOfDay(9, 0);
+    day.dayCutoff = timeOfDay(23, 0);
+    day.blocks = {flexible("late", 60min), flexible("after", 15min)};
+    DayProgress progress;
+    progress.at(0).actualStart = timeOfDay(22, 30);
+
+    const DayPlan result = plan(day, progress, at(22, 40));
+
+    expectBlock(result, 0, timeOfDay(22, 30), timeOfDay(23, 30), BlockState::Active);
+    CHECK(result.at(0).overrunsCutoff);
+    CHECK(result.overrunsCutoff() == std::vector<std::size_t>{0});
+
+    CHECK(result.at(1).state == BlockState::DoesNotFit);
+    CHECK_FALSE(result.at(1).overrunsCutoff);
+
+    SECTION("a block that ends in time is not flagged") {
+        progress.at(0).actualStart = timeOfDay(21, 0);
+        const DayPlan onTime = plan(day, progress, at(21, 10));
+        CHECK(onTime.at(0).state == BlockState::Active);
+        CHECK_FALSE(onTime.at(0).overrunsCutoff);
+        CHECK(onTime.overrunsCutoff().empty());
+        CHECK_FALSE(onTime.doesNotFit());
+    }
+}
+
 TEST_CASE("a soft block waits for the chain and never pushes other blocks", "[planner]") {
     DayTemplate day;
     day.dayStart = timeOfDay(8, 0);
