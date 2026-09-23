@@ -1,4 +1,4 @@
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Multimedia)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets Network Qml Quick QuickControls2 Svg Multimedia)
 
 qt_standard_project_setup(REQUIRES 6.5)
 set(QT_QML_GENERATE_QMLLS_INI ON)
@@ -14,8 +14,12 @@ qt_add_executable(cadence
     fileprogressstore.cpp
     fileprogressstore.hpp
     progressstore.hpp
+    singleinstance.cpp
+    singleinstance.hpp
     systemclock.cpp
     systemclock.hpp
+    trayicon.cpp
+    trayicon.hpp
     wakewatcher.cpp
     wakewatcher.hpp)
 
@@ -51,11 +55,19 @@ qt_add_resources(cadence "cadence_templates"
     BASE "${PROJECT_SOURCE_DIR}/resources/templates"
     FILES "${PROJECT_SOURCE_DIR}/resources/templates/default.json")
 
+qt_add_resources(cadence "cadence_icons"
+    PREFIX "/icons"
+    BASE icons
+    FILES icons/tray.svg)
+
 target_link_libraries(cadence PRIVATE
     cadence::core
+    cadence::platform
     cadence_themeplugin
     Qt6::Core
     Qt6::Gui
+    Qt6::Widgets
+    Qt6::Network
     Qt6::Qml
     Qt6::Quick
     Qt6::QuickControls2

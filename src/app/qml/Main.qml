@@ -6,6 +6,9 @@ import Cadence.Theme
 ApplicationWindow {
     id: root
 
+    // Set by main before load; with a tray the window hides on close and only Quit exits.
+    property bool trayAvailable: false
+
     width: 1280
     height: 800
     minimumWidth: 640
@@ -13,6 +16,13 @@ ApplicationWindow {
     visible: true
     title: "Cadence"
     color: Theme.bg
+
+    onClosing: function(close) {
+        if (root.trayAvailable) {
+            close.accepted = false
+            root.hide()
+        }
+    }
 
     Column {
         id: header
