@@ -2,9 +2,11 @@ add_library(cadence_core STATIC
     include/cadence/core/activity.hpp
     include/cadence/core/block.hpp
     include/cadence/core/clock.hpp
+    include/cadence/core/planner.hpp
     include/cadence/core/time.hpp
     include/cadence/core/version.hpp
     src/block.cpp
+    src/planner.cpp
     src/time.cpp
     src/version.cpp)
 add_library(cadence::core ALIAS cadence_core)
