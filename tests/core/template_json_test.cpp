@@ -130,6 +130,90 @@ TEST_CASE("serialization writes the schema version and omits free days", "[json]
     CHECK(loadTemplateDocument(text) == document);
 }
 
+TEST_CASE("the weekdays shorthand fills Monday to Friday", "[json]") {
+    const std::string json = R"({"version": 1,
+        "activities": [{"id": "a", "name": "A", "color": "#112233"}],
+        "week": {"weekdays": {"dayStart": "09:00", "blocks": [
+            {"activity": "a", "kind": "flexible", "duration": 30}]}}})";
+
+    const TemplateDocument document = loadTemplateDocument(json);
+
+    for (const auto weekday : {std::chrono::Monday, std::chrono::Tuesday, std::chrono::Wednesday,
+                               std::chrono::Thursday, std::chrono::Friday}) {
+        REQUIRE_FALSE(document.week.isFreeDay(weekday));
+        CHECK(document.week.day(weekday)->dayStart == timeOfDay(9, 0));
+        CHECK(document.week.day(weekday)->blocks.size() == 1);
+    }
+    CHECK(document.week.isFreeDay(std::chrono::Saturday));
+    CHECK(document.week.isFreeDay(std::chrono::Sunday));
+}
+
+TEST_CASE("explicit days override the weekdays shorthand whatever their order", "[json]") {
+    const std::string json = R"({"version": 1,
+        "activities": [{"id": "a", "name": "A", "color": "#112233"}],
+        "week": {
+            "wed": {"dayStart": "10:00", "blocks": []},
+            "weekdays": {"dayStart": "09:00", "blocks": [
+                {"activity": "a", "kind": "flexible", "duration": 30}]},
+            "fri": null,
+            "sat": {"dayStart": "11:00", "blocks": []}
+        }})";
+
+    const TemplateDocument document = loadTemplateDocument(json);
+
+    CHECK(document.week.day(std::chrono::Monday)->dayStart == timeOfDay(9, 0));
+    CHECK(document.week.day(std::chrono::Tuesday)->dayStart == timeOfDay(9, 0));
+    CHECK(document.week.day(std::chrono::Thursday)->dayStart == timeOfDay(9, 0));
+    REQUIRE_FALSE(document.week.isFreeDay(std::chrono::Wednesday));
+    CHECK(document.week.day(std::chrono::Wednesday)->dayStart == timeOfDay(10, 0));
+    CHECK(document.week.day(std::chrono::Wednesday)->blocks.empty());
+    CHECK(document.week.isFreeDay(std::chrono::Friday));
+    CHECK(document.week.day(std::chrono::Saturday)->dayStart == timeOfDay(11, 0));
+    CHECK(document.week.isFreeDay(std::chrono::Sunday));
+}
+
+TEST_CASE("serialization emits the shorthand only when Monday to Friday are identical", "[json]") {
+    const TemplateDocument document = loadTemplateDocument(defaultTemplateText());
+
+    SECTION("identical weekdays collapse into weekdays") {
+        const std::string text = serializeTemplateDocument(document);
+        CHECK_THAT(text, ContainsSubstring("\"weekdays\""));
+        CHECK_THAT(text, !ContainsSubstring("\"mon\""));
+        CHECK_THAT(text, !ContainsSubstring("\"fri\""));
+        CHECK(loadTemplateDocument(text) == document);
+    }
+
+    SECTION("a differing weekday forces explicit keys") {
+        TemplateDocument modified = document;
+        modified.week.day(std::chrono::Wednesday)->dayStart = timeOfDay(9, 0);
+        const std::string text = serializeTemplateDocument(modified);
+        CHECK_THAT(text, !ContainsSubstring("\"weekdays\""));
+        CHECK_THAT(text, ContainsSubstring("\"mon\""));
+        CHECK_THAT(text, ContainsSubstring("\"wed\""));
+        CHECK(loadTemplateDocument(text) == modified);
+    }
+
+    SECTION("a free weekday forces explicit keys") {
+        TemplateDocument modified = document;
+        modified.week.day(std::chrono::Friday).reset();
+        const std::string text = serializeTemplateDocument(modified);
+        CHECK_THAT(text, !ContainsSubstring("\"weekdays\""));
+        CHECK_THAT(text, !ContainsSubstring("\"fri\""));
+        CHECK(loadTemplateDocument(text) == modified);
+    }
+}
+
+TEST_CASE("validation reports an issue in shared weekdays once", "[json][validation]") {
+    const std::string json = R"({"version": 1,
+        "activities": [{"id": "a", "name": "A", "color": "#112233"}],
+        "week": {"weekdays": {"dayStart": "09:00", "blocks": [
+            {"activity": "nope", "kind": "flexible", "duration": 30}]}}})";
+
+    const auto issues = validate(parseTemplateDocument(json));
+    REQUIRE(issues.size() == 1);
+    CHECK(issues[0].location == "week.mon.blocks[0]");
+}
+
 TEST_CASE("parse errors name the offending element", "[json]") {
     CHECK_THROWS_WITH(parseTemplateDocument("{not json"), ContainsSubstring("not valid JSON"));
     CHECK_THROWS_WITH(parseTemplateDocument("[]"), ContainsSubstring("expected an object"));

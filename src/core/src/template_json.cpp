@@ -354,9 +354,17 @@ std::vector<ValidationIssue> validate(const TemplateDocument& document) {
         }
     }
 
+    // Identical days, typically expanded from the weekdays shorthand, are reported once under the
+    // first of them.
+    const auto& days = document.week.days;
     for (std::size_t i = 0; i < weekdayKeys.size(); ++i) {
-        if (document.week.days[i]) {
-            validateDay(*document.week.days[i], known, join("week", weekdayKeys[i]), issues);
+        if (!days[i]) {
+            continue;
+        }
+        const bool duplicate = std::any_of(days.begin(), days.begin() + static_cast<std::ptrdiff_t>(i),
+                                           [&days, i](const auto& day) { return day && *day == *days[i]; });
+        if (!duplicate) {
+            validateDay(*days[i], known, join("week", weekdayKeys[i]), issues);
         }
     }
     return issues;
@@ -393,15 +401,27 @@ TemplateDocument parseTemplateDocument(std::string_view json) {
     if (!week.is_object()) {
         fail("week", "expected an object");
     }
-    for (const auto& [key, value] : week.items()) {
-        const auto found = std::find(weekdayKeys.begin(), weekdayKeys.end(), key);
-        if (found == weekdayKeys.end()) {
-            fail("week", "unknown weekday \"" + key + "\", expected mon, tue, wed, thu, fri, sat or sun");
+    // The weekdays shorthand fills Monday to Friday first, whatever its position in the object.
+    // Explicit day keys then override it, and an explicit null makes that day free again.
+    if (const Json* weekdays = optionalMember(week, "weekdays", "week")) {
+        const DayTemplate shared = parseDay(*weekdays, "week.weekdays");
+        for (std::size_t index = 0; index < 5; ++index) {
+            document.week.days[index] = shared;
         }
-        if (value.is_null()) {
+    }
+    for (const auto& [key, value] : week.items()) {
+        if (key == "weekdays") {
             continue;
         }
+        const auto found = std::find(weekdayKeys.begin(), weekdayKeys.end(), key);
+        if (found == weekdayKeys.end()) {
+            fail("week", "unknown weekday \"" + key + "\", expected weekdays, mon, tue, wed, thu, fri, sat or sun");
+        }
         const auto index = static_cast<std::size_t>(found - weekdayKeys.begin());
+        if (value.is_null()) {
+            document.week.days[index].reset();
+            continue;
+        }
         document.week.days[index] = parseDay(value, join("week", key));
     }
     return document;
@@ -421,10 +441,21 @@ std::string serializeTemplateDocument(const TemplateDocument& document) {
     }
     root["activities"] = std::move(activities);
 
+    const auto& days = document.week.days;
+    const bool sameWeekdays =
+        days[0].has_value() && std::all_of(days.begin() + 1, days.begin() + 5, [&days](const auto& day) {
+            return day.has_value() && *day == *days[0];
+        });
     Json week = Json::object();
+    if (sameWeekdays) {
+        week["weekdays"] = toJson(*days[0]);
+    }
     for (std::size_t i = 0; i < weekdayKeys.size(); ++i) {
-        if (document.week.days[i]) {
-            week[weekdayKeys[i]] = toJson(*document.week.days[i]);
+        if (sameWeekdays && i < 5) {
+            continue;
+        }
+        if (days[i]) {
+            week[weekdayKeys[i]] = toJson(*days[i]);
         }
     }
     root["week"] = std::move(week);
