@@ -6,7 +6,18 @@ set(QT_QML_GENERATE_QMLLS_INI ON)
 qt_add_executable(cadence
     main.cpp
     appinfo.cpp
-    appinfo.hpp)
+    appinfo.hpp
+    apppaths.cpp
+    apppaths.hpp
+    daycontroller.cpp
+    daycontroller.hpp
+    fileprogressstore.cpp
+    fileprogressstore.hpp
+    progressstore.hpp
+    systemclock.cpp
+    systemclock.hpp
+    wakewatcher.cpp
+    wakewatcher.hpp)
 
 set_target_properties(cadence PROPERTIES
     OUTPUT_NAME cadence
@@ -15,11 +26,14 @@ set_target_properties(cadence PROPERTIES
     MACOSX_BUNDLE TRUE)
 
 set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
+set_source_files_properties(qml/SignalButton.qml PROPERTIES QT_RESOURCE_ALIAS SignalButton.qml)
 
 qt_add_qml_module(cadence
     URI Cadence
     VERSION 1.0
-    QML_FILES qml/Main.qml
+    QML_FILES
+        qml/Main.qml
+        qml/SignalButton.qml
     OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/qml/Cadence"
     IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
 
@@ -31,6 +45,11 @@ qt_add_resources(cadence "cadence_fonts"
     FILES
         fonts/BigShouldersDisplay/BigShouldersDisplay-Variable.ttf
         fonts/Archivo/Archivo-Variable.ttf)
+
+qt_add_resources(cadence "cadence_templates"
+    PREFIX "/templates"
+    BASE "${PROJECT_SOURCE_DIR}/resources/templates"
+    FILES "${PROJECT_SOURCE_DIR}/resources/templates/default.json")
 
 target_link_libraries(cadence PRIVATE
     cadence::core

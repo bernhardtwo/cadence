@@ -22,6 +22,16 @@ Before opening a pull request make sure:
 
 CI runs the release preset on Windows, Linux and macOS for every push and pull request.
 
+### Trying the app against a test day
+
+Debug builds read two environment variables so a test session never touches your real template or
+progress files:
+
+- `CADENCE_TEST_TEMPLATE`: path of a template JSON to load instead of the user's `week.json`.
+- `CADENCE_TEST_DATA_DIR`: directory that replaces both the config and the data directory.
+
+Release builds ignore both.
+
 ## Commit messages
 
 Cadence uses [Conventional Commits](https://www.conventionalcommits.org/). The subject line is

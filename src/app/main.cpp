@@ -1,3 +1,9 @@
+#include "apppaths.hpp"
+#include "daycontroller.hpp"
+#include "fileprogressstore.hpp"
+#include "systemclock.hpp"
+#include "wakewatcher.hpp"
+
 #include <cadence/core/version.hpp>
 
 #include <QFont>
@@ -9,6 +15,7 @@
 #include <QtLogging>
 
 #include <cstdlib>
+#include <memory>
 
 using namespace Qt::StringLiterals;
 
@@ -43,11 +50,25 @@ int main(int argc, char* argv[]) {
     bodyFont.setPixelSize(15);
     QGuiApplication::setFont(bodyFont);
 
+    apppaths::TemplateLoad templateLoad = apppaths::loadWeekTemplate();
+    if (!templateLoad.error.isEmpty()) {
+        qWarning("%s", qPrintable(templateLoad.error));
+    }
+
+    DayController controller(std::make_unique<SystemClock>(),
+                             std::make_unique<FileProgressStore>(apppaths::progressDir()),
+                             std::move(templateLoad.document), templateLoad.error);
+    DayController::setInstance(&controller);
+
+    WakeWatcher wakeWatcher;
+    QObject::connect(&wakeWatcher, &WakeWatcher::wakeDetected, &controller, &DayController::evaluateNow);
+
     QQmlApplicationEngine engine;
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         [] { QCoreApplication::exit(EXIT_FAILURE); }, Qt::QueuedConnection);
     engine.loadFromModule(u"Cadence"_s, u"Main"_s);
 
+    controller.startTicking();
     return QGuiApplication::exec();
 }
