@@ -46,6 +46,8 @@ class DayController : public QObject {
     Q_PROPERTY(QString pomodoroPhase READ pomodoroPhase NOTIFY changed)
     Q_PROPERTY(int pomodoroRemainingSeconds READ pomodoroRemainingSeconds NOTIFY changed)
     Q_PROPERTY(int pomodorosDone READ pomodorosDone NOTIFY changed)
+    Q_PROPERTY(int pomodoroPhaseSeconds READ pomodoroPhaseSeconds NOTIFY changed)
+    Q_PROPERTY(int currentDurationMinutes READ currentDurationMinutes NOTIFY changed)
     Q_PROPERTY(bool pomodoroOnBreak READ pomodoroOnBreak NOTIFY changed)
     Q_PROPERTY(QString nextBreakText READ nextBreakText NOTIFY changed)
     Q_PROPERTY(int doneMinutes READ doneMinutes NOTIFY changed)
@@ -116,6 +118,8 @@ public:
     QString pomodoroPhase() const;
     int pomodoroRemainingSeconds() const;
     int pomodorosDone() const;
+    int pomodoroPhaseSeconds() const;
+    int currentDurationMinutes() const;
     bool pomodoroOnBreak() const;
     QString nextBreakText() const;
     int doneMinutes() const;

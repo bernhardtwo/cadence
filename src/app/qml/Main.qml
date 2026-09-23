@@ -9,6 +9,8 @@ ApplicationWindow {
     // Set by main before load; with a tray the window hides on close and only Quit exits.
     property bool trayAvailable: false
     property int currentScreen: 0
+    property bool focusMode: false
+    property int visibilityBeforeFocus: Window.Windowed
 
     width: 1280
     height: 800
@@ -29,6 +31,27 @@ ApplicationWindow {
     function editingText() {
         const item = root.activeFocusItem
         return item !== null && item !== undefined && ("cursorPosition" in item)
+    }
+
+    function enterFocusMode() {
+        if (root.focusMode) {
+            return
+        }
+        root.visibilityBeforeFocus = root.visibility
+        root.focusMode = true
+        root.showFullScreen()
+    }
+
+    function exitFocusMode() {
+        if (!root.focusMode) {
+            return
+        }
+        root.focusMode = false
+        if (root.visibilityBeforeFocus === Window.Maximized) {
+            root.showMaximized()
+        } else {
+            root.showNormal()
+        }
     }
 
     function toggleStartPause() {
@@ -82,6 +105,7 @@ ApplicationWindow {
             rightMargin: Theme.spacing40
             bottomMargin: Theme.spacing40
         }
+        visible: !root.focusMode
 
         TopBar {
             id: topBar
@@ -109,6 +133,7 @@ ApplicationWindow {
             TodayScreen {
                 anchors.fill: parent
                 visible: root.currentScreen === 0
+                onFocusModeRequested: root.enterFocusMode()
             }
 
             StatsScreen {
@@ -128,9 +153,35 @@ ApplicationWindow {
         }
     }
 
+    FocusScreen {
+        anchors.fill: parent
+        visible: root.focusMode
+        onExitRequested: root.exitFocusMode()
+    }
+
     Shortcut {
         sequence: "Space"
         onActivated: if (!root.editingText()) root.toggleStartPause()
+    }
+
+    Shortcut {
+        sequence: "F"
+        onActivated: {
+            if (root.editingText()) {
+                return
+            }
+            if (root.focusMode) {
+                root.exitFocusMode()
+            } else {
+                root.enterFocusMode()
+            }
+        }
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: root.focusMode
+        onActivated: root.exitFocusMode()
     }
 
     Shortcut {

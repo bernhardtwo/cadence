@@ -491,6 +491,38 @@ int DayController::pomodorosDone() const {
     return hasPomodoro() ? session_->completedSessions() : 0;
 }
 
+// Length of the running phase, for progress bars.
+int DayController::pomodoroPhaseSeconds() const {
+    if (!hasPomodoro()) {
+        return 0;
+    }
+    const PomodoroPlan& plan = session_->plan();
+    const auto seconds = [](Minutes minutes) {
+        return static_cast<int>(std::chrono::duration_cast<Seconds>(minutes).count());
+    };
+    switch (session_->activePhase()) {
+    case PomodoroState::Idle:
+    case PomodoroState::Focus:
+        return seconds(plan.focus);
+    case PomodoroState::ShortBreak:
+        return seconds(plan.shortBreak);
+    case PomodoroState::LongBreak:
+        return seconds(plan.longBreak);
+    case PomodoroState::Paused:
+    case PomodoroState::Completed:
+        break;
+    }
+    return 0;
+}
+
+int DayController::currentDurationMinutes() const {
+    if (!current_) {
+        return 0;
+    }
+    const PlannedBlock& planned = plan_.at(*current_);
+    return static_cast<int>(std::max(Minutes{0}, planned.end - planned.start).count());
+}
+
 bool DayController::pomodoroOnBreak() const {
     if (!hasPomodoro()) {
         return false;

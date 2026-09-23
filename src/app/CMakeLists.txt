@@ -33,6 +33,7 @@ set_target_properties(cadence PROPERTIES
 
 set(CADENCE_QML_FILES
     qml/BlockBar.qml
+    qml/FocusScreen.qml
     qml/Main.qml
     qml/NavPill.qml
     qml/Overlay.qml
