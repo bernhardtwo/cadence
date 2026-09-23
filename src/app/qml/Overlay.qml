@@ -12,7 +12,7 @@ Window {
     property string headline: ""
     property string detail: ""
     property bool showPushups: false
-    property int defaultReps: 10
+    property int defaultReps: Settings.defaultReps
     property int reps: overlay.defaultReps
 
     readonly property bool onAccent: overlay.mode === "break"

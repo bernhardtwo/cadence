@@ -30,7 +30,8 @@ progress files:
 - `CADENCE_TEST_TEMPLATE`: path of a template JSON to load instead of the user's `week.json`.
 - `CADENCE_TEST_DATA_DIR`: directory that replaces both the config and the data directory.
 
-Release builds ignore both.
+A test session also uses its own single instance key and a no-op launch at login registration, so it
+never wakes or reconfigures the copy you actually use. Release builds ignore both variables.
 
 ## Commit messages
 

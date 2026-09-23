@@ -16,6 +16,8 @@ qt_add_executable(cadence
     fileprogressstore.cpp
     fileprogressstore.hpp
     progressstore.hpp
+    settings.cpp
+    settings.hpp
     singleinstance.cpp
     singleinstance.hpp
     systemclock.cpp

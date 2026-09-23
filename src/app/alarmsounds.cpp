@@ -12,12 +12,16 @@ AlarmSounds::AlarmSounds(QObject* parent) : QObject(parent) {
 }
 
 void AlarmSounds::play(DayController::Alarm kind) {
+    if (mode_ == cadence::core::SoundMode::Silent) {
+        return;
+    }
+    QSoundEffect& urgent = mode_ == cadence::core::SoundMode::Soft ? soft_ : chime_;
     switch (kind) {
     case DayController::BlockStart:
     case DayController::PomodoroFocusEnd:
     case DayController::DayNoLongerFits:
     case DayController::UnconfirmedPending:
-        chime_.play();
+        urgent.play();
         break;
     case DayController::BlockEndingSoon:
     case DayController::SoftReminder:

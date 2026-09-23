@@ -24,9 +24,13 @@ public:
     void showMessage(const QString& title, const QString& message,
                      QSystemTrayIcon::MessageIcon icon = QSystemTrayIcon::Information);
 
+    // The settings screen changed launch at login; the menu entry follows.
+    void syncAutostart();
+
 signals:
     void showRequested();
     void quitRequested();
+    void autostartChanged();
 
 private:
     void refresh();

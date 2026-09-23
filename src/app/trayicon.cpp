@@ -72,8 +72,14 @@ void TrayController::refresh() {
     skipAction_->setEnabled(day_.canSkip());
 }
 
+void TrayController::syncAutostart() {
+    const QSignalBlocker blocker(autostartAction_);
+    autostartAction_->setChecked(autostart_.isEnabled());
+}
+
 void TrayController::toggleAutostart(bool enabled) {
     if (autostart_.setEnabled(enabled)) {
+        emit autostartChanged();
         return;
     }
     showMessage(u"Launch at login"_s, u"Could not update %1"_s.arg(autostart_.location()), QSystemTrayIcon::Warning);

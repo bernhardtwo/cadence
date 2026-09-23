@@ -2,6 +2,8 @@
 
 #include "daycontroller.hpp"
 
+#include <cadence/core/settings_json.hpp>
+
 #include <QObject>
 #include <QSoundEffect>
 
@@ -13,8 +15,10 @@ public:
     explicit AlarmSounds(QObject* parent = nullptr);
 
     void play(DayController::Alarm kind);
+    void setMode(cadence::core::SoundMode mode) { mode_ = mode; }
 
 private:
     QSoundEffect chime_;
     QSoundEffect soft_;
+    cadence::core::SoundMode mode_ = cadence::core::SoundMode::Default;
 };
