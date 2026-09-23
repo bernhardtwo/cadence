@@ -30,3 +30,12 @@ target_compile_definitions(cadence_core_tests PRIVATE
     CADENCE_RESOURCES_DIR="${PROJECT_SOURCE_DIR}/resources")
 
 catch_discover_tests(cadence_core_tests)
+
+add_executable(cadence_platform_tests
+    platform/autostart_test.cpp)
+
+target_link_libraries(cadence_platform_tests PRIVATE
+    cadence::platform_files
+    Catch2::Catch2WithMain)
+
+catch_discover_tests(cadence_platform_tests)

@@ -18,6 +18,7 @@ if(MSVC)
 endif()
 
 add_subdirectory(src/core)
+add_subdirectory(src/platform)
 add_subdirectory(src/app)
 
 if(CADENCE_BUILD_TESTS)
