@@ -13,6 +13,10 @@ list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
 include(Catch)
 
 add_executable(cadence_core_tests
+    core/model_test.cpp
+    core/planner_test.cpp
+    core/pomodoro_test.cpp
+    core/template_json_test.cpp
     core/version_test.cpp)
 
 target_link_libraries(cadence_core_tests PRIVATE
@@ -20,6 +24,7 @@ target_link_libraries(cadence_core_tests PRIVATE
     Catch2::Catch2WithMain)
 
 target_compile_definitions(cadence_core_tests PRIVATE
-    CADENCE_EXPECTED_VERSION="${PROJECT_VERSION}")
+    CADENCE_EXPECTED_VERSION="${PROJECT_VERSION}"
+    CADENCE_RESOURCES_DIR="${PROJECT_SOURCE_DIR}/resources")
 
 catch_discover_tests(cadence_core_tests)
