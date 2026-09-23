@@ -39,3 +39,21 @@ target_link_libraries(cadence_platform_tests PRIVATE
     Catch2::Catch2WithMain)
 
 catch_discover_tests(cadence_platform_tests)
+
+# QML component tests run on the offscreen platform so they need no display.
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickTest)
+
+qt_add_executable(cadence_qml_tests qml/main.cpp)
+
+target_link_libraries(cadence_qml_tests PRIVATE
+    cadence_themeplugin
+    Qt6::Quick
+    Qt6::QuickTest)
+
+target_compile_definitions(cadence_qml_tests PRIVATE
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml")
+
+add_test(NAME cadence_qml_tests COMMAND cadence_qml_tests -import "${CMAKE_BINARY_DIR}/qml")
+set_tests_properties(cadence_qml_tests PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
