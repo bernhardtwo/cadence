@@ -42,14 +42,25 @@ struct BlockProgress {
     friend bool operator==(const BlockProgress&, const BlockProgress&) = default;
 };
 
+struct PushupSet {
+    std::size_t blockIndex;
+    Minutes at;
+    int reps;
+
+    friend bool operator==(const PushupSet&, const PushupSet&) = default;
+};
+
 struct DayProgress {
     // When the user starts the day later than the template's dayStart.
     std::optional<Minutes> actualDayStart;
     // Keyed by index into DayTemplate::blocks. Blocks without an entry have no progress.
     std::map<std::size_t, BlockProgress> blocks;
+    std::vector<PushupSet> pushups;
 
     BlockProgress& at(std::size_t templateIndex) { return blocks[templateIndex]; }
     const BlockProgress* find(std::size_t templateIndex) const noexcept;
+
+    friend bool operator==(const DayProgress&, const DayProgress&) = default;
 };
 
 struct PlannedBlock {

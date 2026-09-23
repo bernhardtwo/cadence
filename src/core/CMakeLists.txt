@@ -4,12 +4,14 @@ add_library(cadence_core STATIC
     include/cadence/core/clock.hpp
     include/cadence/core/planner.hpp
     include/cadence/core/pomodoro.hpp
+    include/cadence/core/progress_json.hpp
     include/cadence/core/template_json.hpp
     include/cadence/core/time.hpp
     include/cadence/core/version.hpp
     src/block.cpp
     src/planner.cpp
     src/pomodoro.cpp
+    src/progress_json.cpp
     src/template_json.cpp
     src/time.cpp
     src/version.cpp)
