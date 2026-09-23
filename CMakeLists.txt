@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(CADENCE_BUILD_TESTS "Build the unit tests" ${PROJECT_IS_TOP_LEVEL})
 option(CADENCE_WARNINGS_AS_ERRORS "Treat warnings in the core library as errors" ON)
 
 if(MSVC)
@@ -18,3 +19,8 @@ endif()
 
 add_subdirectory(src/core)
 add_subdirectory(src/app)
+
+if(CADENCE_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
