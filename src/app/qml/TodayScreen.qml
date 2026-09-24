@@ -116,7 +116,8 @@ Item {
             width: parent.width
             text: DayController.hasPomodoro
                   ? DayController.pomodoroIndex + " of " + DayController.pomodoroTotal + " · " + DayController.nextBreakText
-                  : DayController.pomodoroTotal > 0 ? DayController.pomodoroTotal + " pomodoros" : "No pomodoros"
+                  : DayController.pomodoroTotal === 1 ? "1 pomodoro"
+                  : DayController.pomodoroTotal > 1 ? DayController.pomodoroTotal + " pomodoros" : "No pomodoros"
             color: Theme.text
             elide: Text.ElideRight
             font.family: Theme.bodyFamily
