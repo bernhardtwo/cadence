@@ -58,7 +58,7 @@ target_compile_definitions(cadence_spotify_tests PRIVATE
 catch_discover_tests(cadence_spotify_tests)
 
 # QML component tests run on the offscreen platform so they need no display.
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickTest)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Quick QuickTest LinguistTools)
 
 qt_add_executable(cadence_qml_tests qml/main.cpp)
 set_target_properties(cadence_qml_tests PROPERTIES AUTOMOC ON)
@@ -80,7 +80,14 @@ set_tests_properties(cadence_qml_tests PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
-# Every string must be translated and no stale entry may linger in the .ts files.
+# Every string must be translated and no stale entry may linger in the .ts files. The check
+# re-extracts the strings into scratch copies, so a string added without update_translations
+# fails it too; the tracked catalogs are never touched.
 add_test(NAME cadence_translations_check
-    COMMAND "${CMAKE_COMMAND}" "-DTS_DIR=${PROJECT_SOURCE_DIR}/src/app/translations"
+    COMMAND "${CMAKE_COMMAND}"
+            "-DTS_DIR=${PROJECT_SOURCE_DIR}/src/app/translations"
+            "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+            "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/translations_check"
+            "-DLUPDATE=$<TARGET_FILE:Qt6::lupdate>"
+            "-DLCONVERT=$<TARGET_FILE:Qt6::lconvert>"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/check_translations.cmake")
