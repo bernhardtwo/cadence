@@ -49,6 +49,21 @@ bool readBool(const Json& root, const char* key, bool fallback) {
     return it->get<bool>();
 }
 
+std::string readLanguage(const Json& root) {
+    const auto it = root.find("language");
+    if (it == root.end() || it->is_null()) {
+        return "system";
+    }
+    if (!it->is_string()) {
+        fail("language", "expected a string");
+    }
+    const std::string text = it->get<std::string>();
+    if (text != "system" && text != "en" && text != "es" && text != "fr") {
+        fail("language", "unknown language \"" + text + "\", expected system, en, es or fr");
+    }
+    return text;
+}
+
 int readInt(const Json& root, const char* key, int fallback, int minimum, int maximum) {
     const auto it = root.find(key);
     if (it == root.end() || it->is_null()) {
@@ -74,6 +89,11 @@ std::string serializeAppSettings(const AppSettings& settings) {
     root["maxSnoozes"] = settings.maxSnoozes;
     root["warnDayNoLongerFits"] = settings.warnDayNoLongerFits;
     root["defaultReps"] = settings.defaultReps;
+    root["language"] = settings.language;
+    Json quotes;
+    quotes["show"] = settings.showQuotes;
+    quotes["showOriginals"] = settings.showQuoteOriginals;
+    root["quotes"] = std::move(quotes);
     Json spotify;
     spotify["clientId"] = settings.spotifyClientId;
     spotify["autoplay"] = settings.spotifyAutoplay;
@@ -115,6 +135,14 @@ AppSettings parseAppSettings(std::string_view json) {
     settings.maxSnoozes = readInt(root, "maxSnoozes", settings.maxSnoozes, 0, 20);
     settings.warnDayNoLongerFits = readBool(root, "warnDayNoLongerFits", settings.warnDayNoLongerFits);
     settings.defaultReps = readInt(root, "defaultReps", settings.defaultReps, 1, 500);
+    settings.language = readLanguage(root);
+    if (const auto quotes = root.find("quotes"); quotes != root.end() && !quotes->is_null()) {
+        if (!quotes->is_object()) {
+            fail("quotes", "expected an object");
+        }
+        settings.showQuotes = readBool(*quotes, "show", settings.showQuotes);
+        settings.showQuoteOriginals = readBool(*quotes, "showOriginals", settings.showQuoteOriginals);
+    }
     if (const auto spotify = root.find("spotify"); spotify != root.end() && !spotify->is_null()) {
         if (!spotify->is_object()) {
             fail("spotify", "expected an object");

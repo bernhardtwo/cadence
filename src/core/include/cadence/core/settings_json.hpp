@@ -31,6 +31,11 @@ struct AppSettings {
     int maxSnoozes = 2;
     bool warnDayNoLongerFits = true;
     int defaultReps = 10;
+    // UI language: "system" follows the OS, otherwise one of the shipped codes (en, es, fr).
+    std::string language = "system";
+    bool showQuotes = true;
+    // The Latin or Greek line under a quote, where the surface has room for it.
+    bool showQuoteOriginals = false;
     // The user's own Spotify app. It is an identifier, not a secret; tokens never come here.
     std::string spotifyClientId;
     // Start the activity's playlist when its block starts.

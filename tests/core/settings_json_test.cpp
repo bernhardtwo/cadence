@@ -13,11 +13,26 @@ TEST_CASE("settings survive a serialize and parse round trip", "[settings]") {
     original.maxSnoozes = 5;
     original.warnDayNoLongerFits = false;
     original.defaultReps = 15;
+    original.language = "fr";
+    original.showQuotes = false;
+    original.showQuoteOriginals = true;
 
     const std::string text = serializeAppSettings(original);
     CHECK_THAT(text, ContainsSubstring("\"version\": 1"));
     CHECK_THAT(text, ContainsSubstring("\"sound\": \"silent\""));
+    CHECK_THAT(text, ContainsSubstring("\"language\": \"fr\""));
+    CHECK_THAT(text, ContainsSubstring("\"showOriginals\": true"));
     CHECK(parseAppSettings(text) == original);
+}
+
+TEST_CASE("language and quotes default to system, shown and no originals", "[settings]") {
+    const AppSettings parsed = parseAppSettings(R"({"version": 1})");
+    CHECK(parsed.language == "system");
+    CHECK(parsed.showQuotes);
+    CHECK_FALSE(parsed.showQuoteOriginals);
+    CHECK_FALSE(parseAppSettings(R"({"quotes": {"show": false}})").showQuotes);
+    CHECK_THROWS_WITH(parseAppSettings(R"({"language": "de"})"), ContainsSubstring("language"));
+    CHECK_THROWS_WITH(parseAppSettings(R"({"quotes": {"show": "yes"}})"), ContainsSubstring("show"));
 }
 
 TEST_CASE("missing keys keep their defaults", "[settings]") {

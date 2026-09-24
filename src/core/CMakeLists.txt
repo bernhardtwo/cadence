@@ -3,6 +3,7 @@ add_library(cadence_core STATIC
     include/cadence/core/alarm.hpp
     include/cadence/core/block.hpp
     include/cadence/core/clock.hpp
+    include/cadence/core/language.hpp
     include/cadence/core/phase.hpp
     include/cadence/core/planner.hpp
     include/cadence/core/pomodoro.hpp
@@ -15,6 +16,7 @@ add_library(cadence_core STATIC
     src/alarm.cpp
     src/phase.cpp
     src/block.cpp
+    src/language.cpp
     src/planner.cpp
     src/pomodoro.cpp
     src/progress_json.cpp

@@ -1,10 +1,9 @@
 #include <cadence/core/template_json.hpp>
 
-#include <nlohmann/json.hpp>
-
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <set>
 #include <utility>
@@ -253,62 +252,81 @@ bool isHexColor(const std::string& text) noexcept {
 void validateBlock(const BlockTemplate& block, const std::set<ActivityId>& known, const std::string& location,
                    std::vector<ValidationIssue>& issues) {
     if (!known.contains(block.activityId)) {
-        issues.push_back({location, "unknown activity id \"" + block.activityId + "\""});
+        issues.push_back({location,
+                          "unknown activity id \"" + block.activityId + "\"",
+                          IssueCode::UnknownActivity,
+                          {block.activityId}});
     }
 
     const bool needsStart = block.kind != BlockKind::Flexible;
     if (needsStart && !block.start) {
-        issues.push_back({location, std::string(kindName(block.kind)) + " blocks need a start time"});
+        issues.push_back({location,
+                          std::string(kindName(block.kind)) + " blocks need a start time",
+                          IssueCode::StartRequired,
+                          {std::string(kindName(block.kind))}});
     }
     if (!needsStart && block.start) {
-        issues.push_back({location, "flexible blocks are placed in sequence and do not take a start time"});
+        issues.push_back({location, "flexible blocks are placed in sequence and do not take a start time",
+                          IssueCode::StartNotAllowed});
     }
     if (block.start && !isValidTimeOfDay(*block.start)) {
-        issues.push_back({location, "start must lie between 00:00 and 23:59"});
+        issues.push_back({location, "start must lie between 00:00 and 23:59", IssueCode::StartOutOfRange});
     }
 
     if (block.durationMinutes && *block.durationMinutes <= Minutes{0}) {
-        issues.push_back({location, "duration must be greater than zero"});
+        issues.push_back({location, "duration must be greater than zero", IssueCode::DurationNotPositive});
     }
     if (block.pomodoro) {
         const PomodoroPlan& plan = *block.pomodoro;
         if (plan.focus <= Minutes{0}) {
-            issues.push_back({location, "pomodoro focus must be greater than zero"});
+            issues.push_back(
+                {location, "pomodoro focus must be greater than zero", IssueCode::FocusNotPositive});
         }
         if (plan.shortBreak < Minutes{0} || plan.longBreak < Minutes{0}) {
-            issues.push_back({location, "pomodoro breaks cannot be negative"});
+            issues.push_back({location, "pomodoro breaks cannot be negative", IssueCode::BreakNegative});
         }
         if (plan.longBreakEvery < 0) {
-            issues.push_back({location, "longBreakEvery cannot be negative"});
+            issues.push_back(
+                {location, "longBreakEvery cannot be negative", IssueCode::LongBreakEveryNegative});
         }
         if (plan.count && *plan.count <= 0) {
-            issues.push_back({location, "pomodoro count must be greater than zero"});
+            issues.push_back(
+                {location, "pomodoro count must be greater than zero", IssueCode::CountNotPositive});
         }
     }
 
     const std::optional<Minutes> duration = resolvedDuration(block);
     if (!duration) {
-        issues.push_back({location, "a block needs a duration or a pomodoro plan with a count"});
+        issues.push_back({location, "a block needs a duration or a pomodoro plan with a count",
+                          IssueCode::DurationMissing});
     } else if (*duration <= Minutes{0}) {
         if (!block.durationMinutes) {
-            issues.push_back({location, "the pomodoro plan resolves to a zero duration"});
+            issues.push_back(
+                {location, "the pomodoro plan resolves to a zero duration", IssueCode::ZeroResolvedDuration});
         }
     } else if (block.start && isValidTimeOfDay(*block.start) && *block.start + *duration > minutesPerDay) {
-        issues.push_back({location, "block crosses midnight (" + formatTimeOfDay(*block.start) + " plus " +
-                                        std::to_string(duration->count()) + " minutes)"});
+        const std::string start = formatTimeOfDay(*block.start);
+        const std::string minutes = std::to_string(duration->count());
+        issues.push_back({location,
+                          "block crosses midnight (" + start + " plus " + minutes + " minutes)",
+                          IssueCode::CrossesMidnight,
+                          {start, minutes}});
     }
 }
 
 void validateDay(const DayTemplate& day, const std::set<ActivityId>& known, const std::string& location,
                  std::vector<ValidationIssue>& issues) {
     if (!isValidTimeOfDay(day.dayStart)) {
-        issues.push_back({join(location, "dayStart"), "must lie between 00:00 and 23:59"});
+        issues.push_back(
+            {join(location, "dayStart"), "must lie between 00:00 and 23:59", IssueCode::DayStartOutOfRange});
     }
     if (!isValidTimeOfDay(day.dayCutoff)) {
-        issues.push_back({join(location, "dayCutoff"), "must lie between 00:00 and 23:59"});
+        issues.push_back({join(location, "dayCutoff"), "must lie between 00:00 and 23:59",
+                          IssueCode::DayCutoffOutOfRange});
     }
     if (day.dayCutoff <= day.dayStart) {
-        issues.push_back({join(location, "dayCutoff"), "must be later than dayStart"});
+        issues.push_back(
+            {join(location, "dayCutoff"), "must be later than dayStart", IssueCode::CutoffBeforeStart});
     }
 
     const std::string blocksLocation = join(location, "blocks");
@@ -334,9 +352,14 @@ void validateDay(const DayTemplate& day, const std::set<ActivityId>& known, cons
         const Placed& previous = anchored[i - 1];
         const Placed& current = anchored[i];
         if (current.start < previous.end) {
-            issues.push_back({indexed(blocksLocation, current.index),
-                              "anchored block overlaps anchored block " + std::to_string(previous.index) + " (" +
-                                  formatTimeOfDay(previous.start) + " to " + formatTimeOfDay(previous.end) + ")"});
+            const std::string other = std::to_string(previous.index);
+            const std::string start = formatTimeOfDay(previous.start);
+            const std::string end = formatTimeOfDay(previous.end);
+            issues.push_back(
+                {indexed(blocksLocation, current.index),
+                 "anchored block overlaps anchored block " + other + " (" + start + " to " + end + ")",
+                 IssueCode::AnchoredOverlap,
+                 {other, start, end}});
         }
     }
 }
@@ -351,12 +374,16 @@ std::vector<ValidationIssue> validate(const TemplateDocument& document) {
         const Activity& activity = document.activities[i];
         const std::string location = indexed("activities", i);
         if (activity.id.empty()) {
-            issues.push_back({location, "activity id cannot be empty"});
+            issues.push_back({location, "activity id cannot be empty", IssueCode::ActivityIdEmpty});
         } else if (!known.insert(activity.id).second) {
-            issues.push_back({location, "duplicate activity id \"" + activity.id + "\""});
+            issues.push_back({location,
+                              "duplicate activity id \"" + activity.id + "\"",
+                              IssueCode::DuplicateActivity,
+                              {activity.id}});
         }
         if (!isHexColor(activity.color)) {
-            issues.push_back({join(location, "color"), "expected a color formatted as #RRGGBB"});
+            issues.push_back(
+                {join(location, "color"), "expected a color formatted as #RRGGBB", IssueCode::BadColor});
         }
     }
 
@@ -421,7 +448,8 @@ TemplateDocument parseTemplateDocument(std::string_view json) {
         }
         const auto found = std::find(weekdayKeys.begin(), weekdayKeys.end(), key);
         if (found == weekdayKeys.end()) {
-            fail("week", "unknown weekday \"" + key + "\", expected weekdays, mon, tue, wed, thu, fri, sat or sun");
+            fail("week",
+                 "unknown weekday \"" + key + "\", expected weekdays, mon, tue, wed, thu, fri, sat or sun");
         }
         const auto index = static_cast<std::size_t>(found - weekdayKeys.begin());
         if (value.is_null()) {

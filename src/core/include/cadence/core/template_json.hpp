@@ -24,10 +24,36 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+// Stable identity of a validation problem, so the app can word it in the user's language. The
+// message stays English and is what the command line and the logs print.
+enum class IssueCode {
+    UnknownActivity, // args: activity id
+    StartRequired,   // args: block kind
+    StartNotAllowed,
+    StartOutOfRange,
+    DurationNotPositive,
+    FocusNotPositive,
+    BreakNegative,
+    LongBreakEveryNegative,
+    CountNotPositive,
+    DurationMissing,
+    ZeroResolvedDuration,
+    CrossesMidnight, // args: start, duration in minutes
+    DayStartOutOfRange,
+    DayCutoffOutOfRange,
+    CutoffBeforeStart,
+    AnchoredOverlap, // args: other block index, its start, its end
+    ActivityIdEmpty,
+    DuplicateActivity, // args: activity id
+    BadColor,
+};
+
 struct ValidationIssue {
     // JSON path of the offending element, e.g. "week.mon.blocks[2]".
     std::string location;
     std::string message;
+    IssueCode code = IssueCode::UnknownActivity;
+    std::vector<std::string> args;
 
     friend bool operator==(const ValidationIssue&, const ValidationIssue&) = default;
 };

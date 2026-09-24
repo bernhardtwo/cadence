@@ -225,18 +225,22 @@ TEST_CASE("parse errors name the offending element", "[json]") {
                       ContainsSubstring("missing \"activities\""));
     CHECK_THROWS_WITH(parseTemplateDocument(R"({"version": 1, "activities": [], "week": {"monday": null}})"),
                       ContainsSubstring("unknown weekday \"monday\""));
-    CHECK_THROWS_WITH(parseTemplateDocument(R"({"version": 1, "activities": [{"id": "a", "name": "A"}], "week": {}})"),
-                      ContainsSubstring("activities[0]: missing \"color\""));
-    CHECK_THROWS_WITH(parseTemplateDocument(documentWith(R"({"activity": "a", "kind": "fixed", "duration": 10})")),
-                      ContainsSubstring("week.mon.blocks[0].kind: unknown block kind \"fixed\""));
     CHECK_THROWS_WITH(
-        parseTemplateDocument(documentWith(R"({"activity": "a", "kind": "anchored", "start": "8:00", "duration": 10})")),
+        parseTemplateDocument(R"({"version": 1, "activities": [{"id": "a", "name": "A"}], "week": {}})"),
+        ContainsSubstring("activities[0]: missing \"color\""));
+    CHECK_THROWS_WITH(
+        parseTemplateDocument(documentWith(R"({"activity": "a", "kind": "fixed", "duration": 10})")),
+        ContainsSubstring("week.mon.blocks[0].kind: unknown block kind \"fixed\""));
+    CHECK_THROWS_WITH(
+        parseTemplateDocument(
+            documentWith(R"({"activity": "a", "kind": "anchored", "start": "8:00", "duration": 10})")),
         ContainsSubstring("week.mon.blocks[0].start: expected a time formatted as HH:MM, got \"8:00\""));
-    CHECK_THROWS_WITH(parseTemplateDocument(documentWith(R"({"activity": "a", "kind": "flexible", "duration": "10"})")),
-                      ContainsSubstring("week.mon.blocks[0].duration: expected an integer"));
     CHECK_THROWS_WITH(
-        parseTemplateDocument(documentWith(R"({"activity": "a", "kind": "flexible", "duration": 10, "pushupsOnBreak": 1})")),
-        ContainsSubstring("pushupsOnBreak: expected true or false"));
+        parseTemplateDocument(documentWith(R"({"activity": "a", "kind": "flexible", "duration": "10"})")),
+        ContainsSubstring("week.mon.blocks[0].duration: expected an integer"));
+    CHECK_THROWS_WITH(parseTemplateDocument(documentWith(
+                          R"({"activity": "a", "kind": "flexible", "duration": 10, "pushupsOnBreak": 1})")),
+                      ContainsSubstring("pushupsOnBreak: expected true or false"));
 }
 
 TEST_CASE("validation reports unknown activity ids", "[json][validation]") {
@@ -244,6 +248,8 @@ TEST_CASE("validation reports unknown activity ids", "[json][validation]") {
     REQUIRE(issues.size() == 1);
     CHECK(issues[0].location == "week.mon.blocks[0]");
     CHECK_THAT(issues[0].message, ContainsSubstring("unknown activity id \"nope\""));
+    CHECK(issues[0].code == IssueCode::UnknownActivity);
+    CHECK(issues[0].args == std::vector<std::string>{"nope"});
 }
 
 TEST_CASE("validation reports duplicate and malformed activities", "[json][validation]") {
@@ -288,6 +294,8 @@ TEST_CASE("validation reports blocks crossing midnight", "[json][validation]") {
     REQUIRE(issues.size() == 1);
     CHECK_THAT(issues[0].message, ContainsSubstring("crosses midnight"));
     CHECK_THAT(issues[0].message, ContainsSubstring("23:30"));
+    CHECK(issues[0].code == IssueCode::CrossesMidnight);
+    CHECK(issues[0].args == std::vector<std::string>{"23:30", "60"});
 }
 
 TEST_CASE("validation reports overlapping anchored blocks", "[json][validation]") {
@@ -297,6 +305,8 @@ TEST_CASE("validation reports overlapping anchored blocks", "[json][validation]"
     REQUIRE(issues.size() == 1);
     CHECK(issues[0].location == "week.mon.blocks[1]");
     CHECK_THAT(issues[0].message, ContainsSubstring("overlaps anchored block 0 (09:00 to 11:00)"));
+    CHECK(issues[0].code == IssueCode::AnchoredOverlap);
+    CHECK(issues[0].args == std::vector<std::string>{"0", "09:00", "11:00"});
 
     const auto adjacent = issuesOf(documentWith(R"(
         {"activity": "a", "kind": "anchored", "start": "09:00", "duration": 60},
@@ -306,7 +316,8 @@ TEST_CASE("validation reports overlapping anchored blocks", "[json][validation]"
 
 TEST_CASE("validation reports start times on the wrong block kinds", "[json][validation]") {
     SECTION("anchored without start") {
-        const auto issues = issuesOf(documentWith(R"({"activity": "a", "kind": "anchored", "duration": 30})"));
+        const auto issues =
+            issuesOf(documentWith(R"({"activity": "a", "kind": "anchored", "duration": 30})"));
         REQUIRE(issues.size() == 1);
         CHECK_THAT(issues[0].message, ContainsSubstring("anchored blocks need a start time"));
     }
@@ -316,15 +327,16 @@ TEST_CASE("validation reports start times on the wrong block kinds", "[json][val
         CHECK_THAT(issues[0].message, ContainsSubstring("soft blocks need a start time"));
     }
     SECTION("flexible with start") {
-        const auto issues =
-            issuesOf(documentWith(R"({"activity": "a", "kind": "flexible", "start": "09:00", "duration": 30})"));
+        const auto issues = issuesOf(
+            documentWith(R"({"activity": "a", "kind": "flexible", "start": "09:00", "duration": 30})"));
         REQUIRE(issues.size() == 1);
         CHECK_THAT(issues[0].message, ContainsSubstring("do not take a start time"));
     }
 }
 
 TEST_CASE("validation reports a cutoff that is not after the day start", "[json][validation]") {
-    const auto issues = issuesOf(documentWith(R"({"activity": "a", "kind": "flexible", "duration": 30})", "08:00"));
+    const auto issues =
+        issuesOf(documentWith(R"({"activity": "a", "kind": "flexible", "duration": 30})", "08:00"));
     REQUIRE(issues.size() == 1);
     CHECK(issues[0].location == "week.mon.dayCutoff");
     CHECK_THAT(issues[0].message, ContainsSubstring("later than dayStart"));
@@ -336,8 +348,10 @@ TEST_CASE("loading a template with problems throws and lists all of them", "[jso
         {"activity": "a", "kind": "anchored", "start": "23:00", "duration": 120})");
 
     CHECK_THROWS_WITH(loadTemplateDocument(json), ContainsSubstring("template has 3 problems"));
-    CHECK_THROWS_WITH(loadTemplateDocument(json), ContainsSubstring("week.mon.blocks[0]: unknown activity id"));
-    CHECK_THROWS_WITH(loadTemplateDocument(json), ContainsSubstring("week.mon.blocks[1]: block crosses midnight"));
+    CHECK_THROWS_WITH(loadTemplateDocument(json),
+                      ContainsSubstring("week.mon.blocks[0]: unknown activity id"));
+    CHECK_THROWS_WITH(loadTemplateDocument(json),
+                      ContainsSubstring("week.mon.blocks[1]: block crosses midnight"));
 }
 
 TEST_CASE("the full screen alarm flag defaults to true and is written only when off", "[json]") {
