@@ -239,10 +239,41 @@ Rectangle {
             text: root.block.name
             color: root.ink
             elide: Text.ElideRight
+            // Shrinks to the small display size before eliding, for a narrow bar.
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: Theme.displaySizeMin
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
             font.pixelSize: Math.min(Theme.displaySizeMax, Math.max(Theme.displaySizeMin, Math.round(root.height * 0.4)))
             font.capitalization: Font.AllUppercase
+        }
+
+        // Width of the timer per pixel of font size, from the digit cells TimerText lays out, so
+        // the timer's size can be bounded by the bar's width without reading the timer's own width.
+        FontMetrics {
+            id: timerProbe
+
+            font.family: Theme.displayFamily
+            font.weight: Theme.displayWeightExtraBold
+            font.pixelSize: Theme.displaySizeMax
+
+            // Both read timerProbe.font so they follow it: advanceWidth is a call, not a binding.
+            readonly property real digitCell: {
+                const probeFont = timerProbe.font
+                let widest = 0
+                for (const digit of "0123456789") {
+                    widest = Math.max(widest, timerProbe.advanceWidth(digit))
+                }
+                return widest
+            }
+            readonly property real unitWidth: {
+                const probeFont = timerProbe.font
+                let total = 0
+                for (const character of bigTimer.text) {
+                    total += character >= "0" && character <= "9" ? timerProbe.digitCell : timerProbe.advanceWidth(character)
+                }
+                return total / probeFont.pixelSize
+            }
         }
 
         TimerText {
@@ -261,7 +292,9 @@ Rectangle {
             color: root.ink
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
-            font.pixelSize: Math.min(Theme.blockTimerSize, Math.max(Theme.displaySizeMax, Math.round(root.height * 0.62)))
+            // At most 60 percent of the bar's width, so a narrow bar keeps room for the name.
+            font.pixelSize: Math.min(Theme.blockTimerSize, Math.max(Theme.displaySizeMax, Math.round(Math.min(root.height * 0.62,
+                                     (root.width - Theme.spacing20 * 2) * 0.6 / Math.max(1, timerProbe.unitWidth)))))
         }
 
         Column {

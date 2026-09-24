@@ -36,7 +36,7 @@ Item {
 
         anchors {
             left: parent.left
-            right: side.left
+            right: sidePane.left
             rightMargin: Theme.spacing24
             top: parent.top
             bottom: parent.bottom
@@ -86,163 +86,184 @@ Item {
         }
     }
 
-    Column {
-        id: side
+    // The side column scrolls when the window is too short for the grid and the actions.
+    Flickable {
+        id: sidePane
 
         anchors {
             right: parent.right
             top: parent.top
+            bottom: parent.bottom
         }
         width: Theme.sideColumnWidth
-        spacing: Theme.spacing12
+        clip: true
+        contentHeight: side.height
+        boundsBehavior: Flickable.StopAtBounds
 
-        Text {
-            text: DayController.freeDay ? "" : DayController.currentName
-            color: Theme.textMuted
-            width: parent.width
-            elide: Text.ElideRight
-            font.family: Theme.bodyFamily
-            font.weight: Theme.bodyWeightMedium
-            font.pixelSize: Theme.labelSize
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 1
+        Rectangle {
+            x: sidePane.width - width
+            y: sidePane.contentY + sidePane.visibleArea.yPosition * sidePane.height
+            width: Theme.spacing4
+            height: Math.max(Theme.touchTarget, sidePane.visibleArea.heightRatio * sidePane.height)
+            radius: Theme.pill
+            color: Theme.line
+            visible: sidePane.contentHeight > sidePane.height
         }
 
-        PomodoroGrid {
-            width: parent.width
-        }
+        Column {
+            id: side
 
-        Text {
-            width: parent.width
-            text: DayController.hasPomodoro
-                  ? qsTr("%1 of %2 · %3").arg(DayController.pomodoroIndex).arg(DayController.pomodoroTotal).arg(DayController.nextBreakText)
-                  : DayController.pomodoroTotal > 0 ? qsTr("%n pomodoro(s)", "", DayController.pomodoroTotal) : qsTr("No pomodoros")
-            color: Theme.text
-            elide: Text.ElideRight
-            font.family: Theme.bodyFamily
-            font.weight: Theme.bodyWeightMedium
-            font.pixelSize: Theme.bodySize
-        }
+            width: sidePane.width
+            spacing: Theme.spacing12
 
-        // Compact now playing line, only while connected.
-        Row {
-            width: parent.width
-            spacing: Theme.spacing8
-            visible: Spotify.connected
+            Text {
+                text: DayController.freeDay ? "" : DayController.currentName
+                color: Theme.textMuted
+                width: parent.width
+                elide: Text.ElideRight
+                font.family: Theme.bodyFamily
+                font.weight: Theme.bodyWeightMedium
+                font.pixelSize: Theme.labelSize
+                font.capitalization: Font.AllUppercase
+                font.letterSpacing: 1
+            }
 
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.spacing24
-                height: Theme.spacing24
-                radius: Theme.radius
-                color: Theme.surfaceMuted
-
-                Image {
-                    anchors.fill: parent
-                    source: Spotify.imageUrl
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                }
+            PomodoroGrid {
+                width: parent.width
             }
 
             Text {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - Theme.spacing24 - Theme.spacing8
-                text: Spotify.hasActiveDevice
-                      ? (Spotify.isPlaying ? qsTr("Playing %1 · %2") : qsTr("Paused %1 · %2")).arg(Spotify.trackName).arg(Spotify.artists)
-                      : qsTr("Open Spotify on this PC")
-                color: Theme.textMuted
+                width: parent.width
+                text: DayController.hasPomodoro
+                      ? qsTr("%1 of %2 · %3").arg(DayController.pomodoroIndex).arg(DayController.pomodoroTotal).arg(DayController.nextBreakText)
+                      : DayController.pomodoroTotal > 0 ? qsTr("%n pomodoro(s)", "", DayController.pomodoroTotal) : qsTr("No pomodoros")
+                color: Theme.text
                 elide: Text.ElideRight
                 font.family: Theme.bodyFamily
-                font.pixelSize: Theme.labelSize
+                font.weight: Theme.bodyWeightMedium
+                font.pixelSize: Theme.bodySize
             }
-        }
 
-        Item {
-            width: 1
-            height: Theme.spacing8
-        }
+            // Compact now playing line, only while connected.
+            Row {
+                width: parent.width
+                spacing: Theme.spacing8
+                visible: Spotify.connected
 
-        SignalButton {
-            width: parent.width
-            display: true
-            kind: DayController.canStart ? "primary" : "light"
-            text: DayController.canStart ? qsTr("START BLOCK") : DayController.canResume ? qsTr("RESUME") : qsTr("FOCUS MODE")
-            enabled: DayController.canStart || DayController.canResume || DayController.running
-            onClicked: {
-                if (DayController.canStart) {
-                    DayController.start()
-                } else if (DayController.canResume) {
-                    DayController.resume()
-                } else {
-                    root.focusModeRequested()
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.spacing24
+                    height: Theme.spacing24
+                    radius: Theme.radius
+                    color: Theme.surfaceMuted
+
+                    Image {
+                        anchors.fill: parent
+                        source: Spotify.imageUrl
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - Theme.spacing24 - Theme.spacing8
+                    text: Spotify.hasActiveDevice
+                          ? (Spotify.isPlaying ? qsTr("Playing %1 · %2") : qsTr("Paused %1 · %2")).arg(Spotify.trackName).arg(Spotify.artists)
+                          : qsTr("Open Spotify on this PC")
+                    color: Theme.textMuted
+                    elide: Text.ElideRight
+                    font.family: Theme.bodyFamily
+                    font.pixelSize: Theme.labelSize
                 }
             }
-        }
 
-        Row {
-            width: parent.width
-            spacing: Theme.spacing12
-
-            SignalButton {
-                width: (parent.width - Theme.spacing12) / 2
-                text: DayController.paused ? qsTr("Resume") : qsTr("Pause")
-                enabled: DayController.canPause || DayController.canResume
-                onClicked: DayController.paused ? DayController.resume() : DayController.pause()
+            Item {
+                width: 1
+                height: Theme.spacing8
             }
 
             SignalButton {
-                width: (parent.width - Theme.spacing12) / 2
-                text: qsTr("Skip block")
-                enabled: DayController.canSkip
-                onClicked: DayController.skip()
+                width: parent.width
+                display: true
+                kind: DayController.canStart ? "primary" : "light"
+                text: DayController.canStart ? qsTr("START BLOCK") : DayController.canResume ? qsTr("RESUME") : qsTr("FOCUS MODE")
+                enabled: DayController.canStart || DayController.canResume || DayController.running
+                onClicked: {
+                    if (DayController.canStart) {
+                        DayController.start()
+                    } else if (DayController.canResume) {
+                        DayController.resume()
+                    } else {
+                        root.focusModeRequested()
+                    }
+                }
             }
-        }
 
-        Row {
-            width: parent.width
-            spacing: Theme.spacing12
+            Row {
+                width: parent.width
+                spacing: Theme.spacing12
+
+                SignalButton {
+                    width: (parent.width - Theme.spacing12) / 2
+                    text: DayController.paused ? qsTr("Resume") : qsTr("Pause")
+                    enabled: DayController.canPause || DayController.canResume
+                    onClicked: DayController.paused ? DayController.resume() : DayController.pause()
+                }
+
+                SignalButton {
+                    width: (parent.width - Theme.spacing12) / 2
+                    text: qsTr("Skip block")
+                    enabled: DayController.canSkip
+                    onClicked: DayController.skip()
+                }
+            }
+
+            Row {
+                width: parent.width
+                spacing: Theme.spacing12
+
+                SignalButton {
+                    width: (parent.width - Theme.spacing12) / 2
+                    text: qsTr("Postpone")
+                    enabled: DayController.canPostpone
+                    onClicked: DayController.postpone()
+                }
+
+                SignalButton {
+                    width: (parent.width - Theme.spacing12) / 2
+                    text: qsTr("+10 min")
+                    enabled: DayController.canExtend
+                    onClicked: DayController.extend(10)
+                }
+            }
 
             SignalButton {
-                width: (parent.width - Theme.spacing12) / 2
-                text: qsTr("Postpone")
-                enabled: DayController.canPostpone
-                onClicked: DayController.postpone()
+                width: parent.width
+                kind: "outline"
+                text: qsTr("Finish block")
+                visible: DayController.canFinish
+                onClicked: DayController.finish()
             }
 
             SignalButton {
-                width: (parent.width - Theme.spacing12) / 2
-                text: qsTr("+10 min")
-                enabled: DayController.canExtend
-                onClicked: DayController.extend(10)
+                width: parent.width
+                kind: "outline"
+                text: qsTr("Focus mode")
+                visible: !DayController.running && !DayController.freeDay
+                onClicked: root.focusModeRequested()
             }
-        }
 
-        SignalButton {
-            width: parent.width
-            kind: "outline"
-            text: qsTr("Finish block")
-            visible: DayController.canFinish
-            onClicked: DayController.finish()
-        }
-
-        SignalButton {
-            width: parent.width
-            kind: "outline"
-            text: qsTr("Focus mode")
-            visible: !DayController.running && !DayController.freeDay
-            onClicked: root.focusModeRequested()
-        }
-
-        Text {
-            width: parent.width
-            visible: DayController.doesNotFit
-            text: qsTr("The day no longer fits before the cutoff")
-            color: Theme.alert
-            wrapMode: Text.Wrap
-            font.family: Theme.bodyFamily
-            font.weight: Theme.bodyWeightMedium
-            font.pixelSize: Theme.labelSize
+            Text {
+                width: parent.width
+                visible: DayController.doesNotFit
+                text: qsTr("The day no longer fits before the cutoff")
+                color: Theme.alert
+                wrapMode: Text.Wrap
+                font.family: Theme.bodyFamily
+                font.weight: Theme.bodyWeightMedium
+                font.pixelSize: Theme.labelSize
+            }
         }
     }
 }
