@@ -179,9 +179,19 @@ Window {
 
             width: parent.width
             text: overlay.mode === "break" ? (overlay.showPushups ? qsTr("DROP AND GIVE ME") : qsTr("TAKE A BREAK")) : overlay.headline
+            // A block name is user content of any length: the headline shrinks until it fits two
+            // lines within half the screen. The break headline gets one line of its own size; a
+            // fixed box, not implicitHeight, so the fit cannot feed back into the height.
+            height: overlay.mode === "break" ? Math.round(Theme.overlayHeadlineSize * 1.25)
+                                             : Math.round(overlay.height * 0.5)
             color: overlay.headlineColor
             horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
             wrapMode: Text.Wrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            fontSizeMode: Text.Fit
+            minimumPixelSize: Theme.headingSizeMax
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
             font.pixelSize: overlay.mode === "break" ? Theme.overlayHeadlineSize
