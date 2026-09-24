@@ -14,6 +14,10 @@ Window {
     property bool showPushups: false
     property int defaultReps: Settings.defaultReps
     property int reps: overlay.defaultReps
+    // Keys are ignored for a moment after the overlay appears, so typing momentum in another app
+    // cannot dismiss or trigger it. Buttons work at once.
+    property bool keysArmed: false
+    readonly property int armDelayMs: 2000
 
     readonly property bool onAccent: overlay.mode === "break"
     readonly property color ink: overlay.onAccent ? Theme.textOnAccent : Theme.text
@@ -32,10 +36,19 @@ Window {
         headline = newHeadline
         detail = newDetail
         reps = overlay.defaultReps
+        keysArmed = false
+        armTimer.restart()
         showFullScreen()
         raise()
         requestActivate()
         EventLog.write("overlay shown " + newMode + " block=" + index)
+    }
+
+    Timer {
+        id: armTimer
+
+        interval: overlay.armDelayMs
+        onTriggered: overlay.keysArmed = true
     }
 
     // reason names what closed the overlay: escape, or the action the user took.
@@ -56,26 +69,15 @@ Window {
 
     Shortcut {
         sequence: "Escape"
+        enabled: overlay.keysArmed
         onActivated: overlay.dismiss()
     }
 
-    // Return takes the primary action of the mode.
+    // Return only continues; starting a block, logging a set or confirming need a click.
     Shortcut {
         sequences: ["Return", "Enter"]
-        onActivated: {
-            if (overlay.mode === "blockStart") {
-                DayController.start()
-                overlay.dismiss("start")
-            } else if (overlay.mode === "break" && overlay.showPushups) {
-                DayController.logPushups(overlay.reps)
-                overlay.dismiss("log-set")
-            } else if (overlay.mode === "unconfirmed") {
-                DayController.confirm(overlay.blockIndex, true)
-                overlay.dismiss("confirm-yes")
-            } else {
-                overlay.dismiss("continue")
-            }
-        }
+        enabled: overlay.keysArmed && (overlay.mode === "done" || (overlay.mode === "break" && !overlay.showPushups))
+        onActivated: overlay.dismiss("continue")
     }
 
     // Top line: what kind of moment this is, and the countdown while on a break.
@@ -309,7 +311,7 @@ Window {
             bottom: parent.bottom
             bottomMargin: Theme.spacing40
         }
-        text: "Esc to dismiss"
+        text: overlay.keysArmed ? "Esc to dismiss" : "Keys enabled in 2 s"
         color: overlay.inkMuted
         font.family: Theme.bodyFamily
         font.pixelSize: Theme.labelSize
