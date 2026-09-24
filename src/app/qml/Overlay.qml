@@ -64,7 +64,7 @@ Window {
 
     function mmss(seconds) {
         const clamped = Math.max(0, seconds)
-        return Math.floor(clamped / 60) + ":" + ("0" + clamped % 60).slice(-2)
+        return String(Math.floor(clamped / 60)).padStart(2, "0") + ":" + ("0" + clamped % 60).slice(-2)
     }
 
     Shortcut {

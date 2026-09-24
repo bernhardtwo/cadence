@@ -31,7 +31,7 @@ Rectangle {
         const clamped = Math.max(0, seconds)
         const minutes = Math.floor(clamped / 60)
         const secs = clamped % 60
-        return minutes + ":" + ("0" + secs).slice(-2)
+        return String(minutes).padStart(2, "0") + ":" + ("0" + secs).slice(-2)
     }
 
     // Compact row for every block that is not the current one.

@@ -21,9 +21,9 @@ Rectangle {
         const minutes = Math.floor(clamped / 60) % 60
         const secs = clamped % 60
         if (hours > 0) {
-            return hours + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + secs).slice(-2)
+            return hours + ":" + String(minutes).padStart(2, "0") + ":" + ("0" + secs).slice(-2)
         }
-        return minutes + ":" + ("0" + secs).slice(-2)
+        return String(minutes).padStart(2, "0") + ":" + ("0" + secs).slice(-2)
     }
 
     Text {
