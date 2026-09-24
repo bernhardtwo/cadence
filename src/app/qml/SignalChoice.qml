@@ -18,8 +18,20 @@ Item {
 
     signal chosen(string option)
 
-    implicitWidth: pills.implicitWidth
-    implicitHeight: Theme.touchTarget + Theme.spacing20
+    // The width of all pills in one row; a narrower explicit width wraps them onto more rows and
+    // the height follows.
+    readonly property real rowWidth: {
+        let total = 0
+        for (const child of pills.children) {
+            if (child.implicitWidth > 0) {
+                total += child.implicitWidth + pills.spacing
+            }
+        }
+        return Math.max(0, total - pills.spacing)
+    }
+
+    implicitWidth: root.rowWidth
+    implicitHeight: pills.implicitHeight + Theme.spacing20
 
     Text {
         anchors {
@@ -35,11 +47,12 @@ Item {
         font.letterSpacing: 1
     }
 
-    Row {
+    Flow {
         id: pills
 
         anchors {
             left: parent.left
+            right: parent.right
             bottom: parent.bottom
         }
         spacing: Theme.spacing4

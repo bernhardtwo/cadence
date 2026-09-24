@@ -26,10 +26,15 @@ Item {
     // Vertical room the slot offers; negative means unlimited.
     property real maxHeight: -1
     property string quoteId: ""
+    // A preview walks the group in order and leaves the shuffle bags alone.
+    property bool sampled: false
+    property int sampleIndex: 0
     // The surface's own say on visibility, on top of the setting and the fit.
     property bool shown: true
     property int topPadding: 0
     property int horizontalAlignment: Text.AlignLeft
+    // Lines the slot allows before a quote counts as not fitting.
+    property int maxLines: root.overlay ? 4 : 3
 
     readonly property bool overlay: root.variant === "overlay"
     readonly property int quoteSize: root.variant === "card" ? Theme.quoteSizeCard
@@ -43,6 +48,11 @@ Item {
     implicitHeight: column.implicitHeight + root.topPadding
 
     function refresh() {
+        if (root.sampled) {
+            root.sampleIndex = 0
+            root.quoteId = Quotes.sample(root.context, 0)
+            return
+        }
         root.quoteId = root.phaseKey.length > 0 ? Quotes.current(root.surface, root.phaseKey, root.context) : ""
     }
 
@@ -51,11 +61,21 @@ Item {
         if (root.quoteId.length === 0 || root.fits || !Settings.showQuotes) {
             return
         }
+        if (root.sampled) {
+            if (root.sampleIndex + 1 >= Quotes.groupSize(root.context)) {
+                root.quoteId = ""
+                return
+            }
+            root.sampleIndex += 1
+            root.quoteId = Quotes.sample(root.context, root.sampleIndex)
+            return
+        }
         root.quoteId = Quotes.replace(root.surface, root.phaseKey, root.context)
     }
 
     onPhaseKeyChanged: root.refresh()
-    Component.onCompleted: root.refresh()
+    // A key given as an initial property has already been handled above.
+    Component.onCompleted: if (root.quoteId.length === 0) root.refresh()
     onFitsChanged: Qt.callLater(root.retry)
 
     Column {
@@ -74,7 +94,7 @@ Item {
             horizontalAlignment: root.horizontalAlignment
             wrapMode: Text.Wrap
             elide: Text.ElideRight
-            maximumLineCount: root.overlay ? 4 : 3
+            maximumLineCount: root.maxLines
             lineHeight: root.variant === "overlay" ? Theme.quoteLineHeightOverlay : Theme.quoteLineHeightCard
             font.family: Theme.bodyFamily
             font.weight: Theme.bodyWeightMedium

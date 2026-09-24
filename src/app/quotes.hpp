@@ -41,6 +41,8 @@ public:
     Q_INVOKABLE QString replace(const QString& surface, const QString& phaseKey, const QString& context);
     // The next quote of the group with no surface memory, or an empty id for an unknown group.
     Q_INVOKABLE QString pick(const QString& context);
+    // The group member at index (wrapping), for previews that must not disturb the bags.
+    Q_INVOKABLE QString sample(const QString& context, int index) const;
     Q_INVOKABLE int groupSize(const QString& context) const;
     Q_INVOKABLE QString text(const QString& id, const QString& language) const;
     Q_INVOKABLE QString attribution(const QString& id, const QString& language) const;

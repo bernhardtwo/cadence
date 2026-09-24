@@ -3,7 +3,7 @@ import QtQuick
 import Cadence
 import Cadence.Theme
 
-// Preferences in four sections. Every control writes straight to the Settings singleton, which
+// Preferences in six sections. Every control writes straight to the Settings singleton, which
 // persists and applies the change at once.
 Item {
     id: root
@@ -128,6 +128,96 @@ Item {
                         value: String(Settings.defaultReps)
                         onCommitted: function (text) {
                             Settings.defaultReps = parseInt(text) || 1;
+                        }
+                    }
+                }
+
+                Column {
+                    spacing: Theme.spacing16
+
+                    SectionTitle {
+                        text: qsTr("Language")
+                    }
+
+                    SignalChoice {
+                        width: leftColumn.width
+                        label: qsTr("Shown in")
+                        options: [qsTr("System language (%1)").arg(Language.nativeName(Language.systemLanguage)),
+                                  Language.nativeName("en"), Language.nativeName("es"), Language.nativeName("fr")]
+                        values: ["system", "en", "es", "fr"]
+                        current: Settings.language
+                        onChosen: function (option) {
+                            Settings.language = option;
+                        }
+                    }
+                }
+
+                Column {
+                    spacing: Theme.spacing16
+
+                    SectionTitle {
+                        text: qsTr("Quotes")
+                    }
+
+                    SignalToggle {
+                        label: qsTr("Show philosophers' quotes")
+                        checked: Settings.showQuotes
+                        onToggled: function (checked) {
+                            Settings.showQuotes = checked;
+                        }
+                    }
+
+                    Column {
+                        spacing: Theme.spacing4
+
+                        SignalToggle {
+                            label: qsTr("Also show the original text")
+                            enabled: Settings.showQuotes
+                            checked: Settings.showQuoteOriginals
+                            onToggled: function (checked) {
+                                Settings.showQuoteOriginals = checked;
+                            }
+                        }
+
+                        Text {
+                            width: leftColumn.width
+                            text: qsTr("Latin or Greek, as a small line under the translation.")
+                            color: Theme.textMuted
+                            wrapMode: Text.Wrap
+                            font.family: Theme.bodyFamily
+                            font.pixelSize: Theme.labelSize
+                        }
+                    }
+
+                    // A break quote on the accent, following both toggles live.
+                    Rectangle {
+                        width: leftColumn.width
+                        height: previewQuote.implicitHeight + Theme.spacing24 * 2
+                        radius: Theme.radius
+                        color: Theme.accent
+                        // The child reads the card's visibility, so the card asks for the fit instead.
+                        visible: Settings.showQuotes && previewQuote.fits
+
+                        QuoteBlock {
+                            id: previewQuote
+
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: Theme.spacing24
+                            }
+                            surface: "preview"
+                            phaseKey: "settings"
+                            sampled: true
+                            context: "break"
+                            variant: "overlay"
+                            // Narrower than the overlay slot, so it may run longer instead.
+                            maxLines: 8
+                            showOriginal: Settings.showQuoteOriginals
+                            quoteColor: Theme.textOnAccent
+                            attributionColor: Theme.quoteInkOnAccentMuted
+                            originalColor: Theme.quoteInkOnAccentMuted
                         }
                     }
                 }

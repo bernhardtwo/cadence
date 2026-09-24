@@ -94,6 +94,16 @@ QString QuoteProvider::replace(const QString& surface, const QString& phaseKey, 
     return shown.id;
 }
 
+QString QuoteProvider::sample(const QString& context, int index) const {
+    const auto parsed = parseQuoteContext(context.toStdString());
+    if (!available_ || !parsed || index < 0) {
+        return {};
+    }
+    const std::vector<std::string> ids = catalog_.idsIn(*parsed);
+    return ids.empty() ? QString()
+                       : QString::fromStdString(ids[static_cast<std::size_t>(index) % ids.size()]);
+}
+
 int QuoteProvider::groupSize(const QString& context) const {
     const auto parsed = parseQuoteContext(context.toStdString());
     return available_ && parsed ? static_cast<int>(catalog_.idsIn(*parsed).size()) : 0;

@@ -72,6 +72,16 @@ QStringList LanguageManager::shortDayNames() const {
 }
 
 QString LanguageManager::nativeName(const QString& code) const {
+    // QLocale names the region too ("American English"); the shipped languages want the bare name.
+    if (code == u"en"_s) {
+        return u"English"_s;
+    }
+    if (code == u"es"_s) {
+        return u"Español"_s;
+    }
+    if (code == u"fr"_s) {
+        return u"Français"_s;
+    }
     QString name = QLocale(code).nativeLanguageName();
     if (name.isEmpty()) {
         return code;
