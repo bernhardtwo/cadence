@@ -70,6 +70,9 @@ QML follows the same spirit:
 - Only the Basic control style is allowed. Material, Fusion, Universal and Imagine must not be imported
   and every control we render gets its own visual override.
 - Name ids with lowerCamelCase and keep one component per file.
+- Every changing time value (countdowns, remaining time, the summary clock) renders through
+  `TimerText`, never a plain `Text`. Big Shoulders Display has no tabular figures, so the component
+  lays each digit out in a fixed cell to keep the digits from shifting as they count.
 
 ## Reporting issues
 
