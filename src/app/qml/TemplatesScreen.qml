@@ -32,8 +32,16 @@ Item {
         }
         spacing: Theme.spacing16
 
-        Row {
+        // Seven pills at their full width when the column allows, narrower down to the touch
+        // target when it does not, and on two lines below that.
+        Flow {
+            id: dayPills
+
+            width: parent.width
             spacing: Theme.spacing8
+
+            readonly property int pillWidth: Math.max(Theme.touchTarget,
+                Math.min(Theme.buttonHeightLarge, Math.floor((dayPills.width - Theme.spacing8 * 6) / 7)))
 
             Repeater {
                 model: 7
@@ -45,7 +53,7 @@ Item {
                     readonly property bool planned: TemplateEditor.plannedDays[dayPill.index]
                     readonly property bool active: TemplateEditor.selectedDay === dayPill.index
 
-                    width: Theme.buttonHeightLarge
+                    width: dayPills.pillWidth
                     height: Theme.touchTarget
                     radius: Theme.pill
                     color: dayPill.active ? Theme.text : dayPill.planned ? Theme.surfaceMuted : "transparent"
@@ -89,40 +97,56 @@ Item {
             }
         }
 
-        Row {
+        // The day fields wrap under the buttons when the column is too narrow for the four of
+        // them, which the French labels need below about 1280.
+        Flow {
+            width: parent.width
             spacing: Theme.spacing12
 
-            SignalButton {
-                anchors.bottom: parent.bottom
-                text: qsTr("Copy Monday to Tuesday-Friday")
-                onClicked: TemplateEditor.copyMondayToWeekdays()
+            Row {
+                id: dayButtons
+
+                spacing: Theme.spacing12
+                // Level with the fields while they share the line, its own height once they wrap.
+                height: dayFields.visible && dayFields.y === dayButtons.y ? dayFields.height : Theme.touchTarget
+
+                SignalButton {
+                    anchors.bottom: parent.bottom
+                    text: qsTr("Copy Monday to Tuesday-Friday")
+                    onClicked: TemplateEditor.copyMondayToWeekdays()
+                }
+
+                SignalButton {
+                    anchors.bottom: parent.bottom
+                    kind: "outline"
+                    text: TemplateEditor.dayPlanned ? qsTr("Make free day") : qsTr("Plan this day")
+                    onClicked: TemplateEditor.setDayPlanned(!TemplateEditor.dayPlanned)
+                }
             }
 
-            SignalButton {
-                anchors.bottom: parent.bottom
-                kind: "outline"
-                text: TemplateEditor.dayPlanned ? qsTr("Make free day") : qsTr("Plan this day")
-                onClicked: TemplateEditor.setDayPlanned(!TemplateEditor.dayPlanned)
-            }
+            Row {
+                id: dayFields
 
-            SignalField {
-                anchors.bottom: parent.bottom
-                label: qsTr("Day start")
-                value: TemplateEditor.dayStartText
-                placeholder: "08:30"
+                spacing: Theme.spacing12
                 visible: TemplateEditor.dayPlanned
-                error: root.dayIssues.some(issue => issue.location.endsWith("dayStart"))
-                onCommitted: function(text) { TemplateEditor.setDayStart(text) }
-            }
 
-            SignalField {
-                anchors.bottom: parent.bottom
-                label: qsTr("Cutoff")
-                value: TemplateEditor.dayCutoffText
-                placeholder: "23:00"
-                visible: TemplateEditor.dayPlanned
-                error: root.dayIssues.some(issue => issue.location.endsWith("dayCutoff"))
-                onCommitted: function(text) { TemplateEditor.setDayCutoff(text) }
+                SignalField {
+                    anchors.bottom: parent.bottom
+                    label: qsTr("Day start")
+                    value: TemplateEditor.dayStartText
+                    placeholder: "08:30"
+                    error: root.dayIssues.some(issue => issue.location.endsWith("dayStart"))
+                    onCommitted: function(text) { TemplateEditor.setDayStart(text) }
+                }
+
+                SignalField {
+                    anchors.bottom: parent.bottom
+                    label: qsTr("Cutoff")
+                    value: TemplateEditor.dayCutoffText
+                    placeholder: "23:00"
+                    error: root.dayIssues.some(issue => issue.location.endsWith("dayCutoff"))
+                    onCommitted: function(text) { TemplateEditor.setDayCutoff(text) }
+                }
             }
         }
 
