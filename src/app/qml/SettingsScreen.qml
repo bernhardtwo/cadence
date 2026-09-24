@@ -43,14 +43,15 @@ Item {
             visible: page.contentHeight > page.height
         }
 
-        Row {
+        // Two columns side by side; the music card stacks under the left column when the
+        // window is too narrow for both.
+        Flow {
             id: sections
 
             width: Math.min(parent.width, Theme.contentMaxWidth)
             spacing: Theme.spacing40
 
-            // Startup, alarms and push-ups on the left; the music card on the right so the whole
-            // screen fits the baseline window.
+            // Startup, alarms and push-ups on the left; the music card on the right.
             Column {
                 id: leftColumn
                 width: Theme.panelWidth + Theme.spacing40
