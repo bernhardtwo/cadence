@@ -189,6 +189,49 @@
         <translation>flexiones</translation>
     </message>
     <message>
+        <source>window closed</source>
+        <translation>ventana cerrada</translation>
+    </message>
+    <message>
+        <source>%1 to %2 · restoring puts it back at its time.</source>
+        <translation>%1 a %2 · restaurar lo devuelve a su hora.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 to %2 · %3 done · restoring continues at the current time with %4 left, %n pomodoro(s).</source>
+        <translation>
+            <numerusform>%1 a %2 · %3 hecho · restaurar continúa a la hora actual y quedan %4, %n pomodoro.</numerusform>
+            <numerusform>%1 a %2 · %3 hecho · restaurar continúa a la hora actual y quedan %4, %n pomodoros.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 to %2 · %3 done · restoring continues at the current time with %4 left.</source>
+        <translation>%1 a %2 · %3 hecho · restaurar continúa a la hora actual y quedan %4.</translation>
+    </message>
+    <message>
+        <source>Soft, restoring re-arms the reminder.</source>
+        <translation>Recordatorio, restaurar lo vuelve a activar.</translation>
+    </message>
+    <message>
+        <source>Skipped at %1 · soft, restoring re-arms the reminder.</source>
+        <translation>Saltado a las %1 · recordatorio, restaurar lo vuelve a activar.</translation>
+    </message>
+    <message>
+        <source>Flexible, restoring puts it back in the queue after %1.</source>
+        <translation>Flexible, restaurar lo devuelve a la cola después de %1.</translation>
+    </message>
+    <message>
+        <source>Skipped at %1 · flexible, restoring puts it back in the queue after %2.</source>
+        <translation>Saltado a las %1 · flexible, restaurar lo devuelve a la cola después de %2.</translation>
+    </message>
+    <message>
+        <source>Flexible, restoring puts it back at the front of the queue.</source>
+        <translation>Flexible, restaurar lo devuelve al frente de la cola.</translation>
+    </message>
+    <message>
+        <source>Skipped at %1 · flexible, restoring puts it back at the front of the queue.</source>
+        <translation>Saltado a las %1 · flexible, restaurar lo devuelve al frente de la cola.</translation>
+    </message>
+    <message>
         <source>Free day</source>
         <translation>Día libre</translation>
     </message>
@@ -581,6 +624,21 @@
     <message>
         <source>Clear</source>
         <translation>Quitar</translation>
+    </message>
+</context>
+<context>
+    <name>SkippedBlockRow</name>
+    <message>
+        <source>SKIPPED AT %1</source>
+        <translation>SALTADO A LAS %1</translation>
+    </message>
+    <message>
+        <source>RESTORE</source>
+        <translation>RESTAURAR</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Restaurar</translation>
     </message>
 </context>
 <context>

@@ -20,6 +20,8 @@ QtObject {
     readonly property color quoteInkOnAccentMuted: "#3F4A12"
     // Quote text in focus mode: between text and textMuted.
     readonly property color quoteTextOnDark: "#B5B2AA"
+    // Captions under a block name, the same step between text and textMuted.
+    readonly property color textSoft: "#B5B2AA"
 
     // Fonts. The families are registered from the bundled TTFs at startup.
     readonly property string displayFamily: "Big Shoulders Display"
@@ -43,10 +45,13 @@ QtObject {
     readonly property int headingSizeMax: 32
     readonly property int wordmarkSize: 28
     readonly property int blockNameSize: 32
+    readonly property int skippedNameSize: 36
+    readonly property int displaySizeButton: 24
     readonly property int blockTimerSize: 160
     readonly property int overlayHeadlineSize: 88
     readonly property int bodySize: 15
     readonly property int labelSize: 13
+    readonly property int captionSize: 14
 
     // Quotes. Sizes per surface, the line heights of the design and the widest a quote may run.
     readonly property int quoteSizeCard: 24
@@ -74,6 +79,7 @@ QtObject {
     readonly property int spacing40: 40
     readonly property int touchTarget: 44
     readonly property int buttonHeightLarge: 64
+    readonly property int buttonHeightMedium: 52
     readonly property int outlineWidth: 2
 
     // Layout

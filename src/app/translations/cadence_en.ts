@@ -17,6 +17,13 @@
             <numerusform>%n pomodoros</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%1 to %2 · %3 done · restoring continues at the current time with %4 left, %n pomodoro(s).</source>
+        <translation>
+            <numerusform>%1 to %2 · %3 done · restoring continues at the current time with %4 left, %n pomodoro.</numerusform>
+            <numerusform>%1 to %2 · %3 done · restoring continues at the current time with %4 left, %n pomodoros.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PlaylistPicker</name>

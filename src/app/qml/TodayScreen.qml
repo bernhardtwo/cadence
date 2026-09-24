@@ -23,9 +23,8 @@ Item {
     function barHeight(block) {
         const available = bars.height - (root.blocks.length - 1) * Theme.spacing8
         const proportional = Math.max(1, block.durationMinutes) * available / root.totalMinutes
-        const minimum = block.current && block.state !== "Done" && block.state !== "Skipped"
-                        ? Theme.currentBlockMinHeight : Theme.blockMinHeight
-        if (block.state === "Skipped" || block.state === "Done") {
+        const minimum = block.current && block.state !== "Done" ? Theme.currentBlockMinHeight : Theme.blockMinHeight
+        if (block.state === "Done") {
             return Theme.blockMinHeight
         }
         return Math.max(minimum, Math.round(proportional))
@@ -79,7 +78,7 @@ Item {
                     required property var modelData
 
                     width: barColumn.width
-                    height: root.barHeight(bar.modelData)
+                    height: bar.modelData.state === "Skipped" ? bar.implicitHeight : root.barHeight(bar.modelData)
                     block: bar.modelData
                 }
             }

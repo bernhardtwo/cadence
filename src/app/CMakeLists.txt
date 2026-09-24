@@ -58,6 +58,7 @@ set(CADENCE_QML_FILES
     qml/SignalChoice.qml
     qml/SignalField.qml
     qml/SignalToggle.qml
+    qml/SkippedBlockRow.qml
     qml/StatsScreen.qml
     qml/TemplatesScreen.qml
     qml/TimerText.qml

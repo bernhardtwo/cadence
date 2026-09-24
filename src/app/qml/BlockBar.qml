@@ -23,9 +23,11 @@ Rectangle {
 
     radius: Theme.radius
     color: root.accented ? Theme.accent : root.big ? Theme.surfaceMuted : Theme.surface
-    border.width: root.big && !root.accented ? Theme.outlineWidth : 0
-    border.color: Theme.accent
+    border.width: root.isSkipped ? 1 : root.big && !root.accented ? Theme.outlineWidth : 0
+    border.color: root.isSkipped ? Theme.alert : Theme.accent
     opacity: root.isDone ? 0.5 : 1
+    // A skipped row is as tall as its caption and action need; the others are sized by the day.
+    implicitHeight: root.isSkipped ? skippedRow.implicitHeight : Theme.blockMinHeight
 
     function mmss(seconds) {
         const clamped = Math.max(0, seconds)
@@ -34,14 +36,22 @@ Rectangle {
         return String(minutes).padStart(2, "0") + ":" + ("0" + secs).slice(-2)
     }
 
-    // Compact row for every block that is not the current one.
+    SkippedBlockRow {
+        id: skippedRow
+
+        anchors.fill: parent
+        visible: root.isSkipped
+        block: root.block
+    }
+
+    // Compact row for every block that is neither the current one nor skipped.
     Item {
         anchors {
             fill: parent
             leftMargin: Theme.spacing20
             rightMargin: Theme.spacing20
         }
-        visible: !root.big
+        visible: !root.big && !root.isSkipped
 
         Text {
             id: compactName

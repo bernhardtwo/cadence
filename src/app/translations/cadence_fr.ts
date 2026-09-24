@@ -189,6 +189,49 @@
         <translation>pompes</translation>
     </message>
     <message>
+        <source>window closed</source>
+        <translation>fenêtre fermée</translation>
+    </message>
+    <message>
+        <source>%1 to %2 · restoring puts it back at its time.</source>
+        <translation>%1 à %2 · restaurer le remet à son heure.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 to %2 · %3 done · restoring continues at the current time with %4 left, %n pomodoro(s).</source>
+        <translation>
+            <numerusform>%1 à %2 · %3 fait · restaurer continue à l&apos;heure actuelle, reste %4, %n pomodoro.</numerusform>
+            <numerusform>%1 à %2 · %3 fait · restaurer continue à l&apos;heure actuelle, reste %4, %n pomodoros.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 to %2 · %3 done · restoring continues at the current time with %4 left.</source>
+        <translation>%1 à %2 · %3 fait · restaurer continue à l&apos;heure actuelle, reste %4.</translation>
+    </message>
+    <message>
+        <source>Soft, restoring re-arms the reminder.</source>
+        <translation>Rappel, restaurer le réactive.</translation>
+    </message>
+    <message>
+        <source>Skipped at %1 · soft, restoring re-arms the reminder.</source>
+        <translation>Passé à %1 · rappel, restaurer le réactive.</translation>
+    </message>
+    <message>
+        <source>Flexible, restoring puts it back in the queue after %1.</source>
+        <translation>Flexible, restaurer le remet dans la file après %1.</translation>
+    </message>
+    <message>
+        <source>Skipped at %1 · flexible, restoring puts it back in the queue after %2.</source>
+        <translation>Passé à %1 · flexible, restaurer le remet dans la file après %2.</translation>
+    </message>
+    <message>
+        <source>Flexible, restoring puts it back at the front of the queue.</source>
+        <translation>Flexible, restaurer le remet en tête de la file.</translation>
+    </message>
+    <message>
+        <source>Skipped at %1 · flexible, restoring puts it back at the front of the queue.</source>
+        <translation>Passé à %1 · flexible, restaurer le remet en tête de la file.</translation>
+    </message>
+    <message>
         <source>Free day</source>
         <translation>Journée libre</translation>
     </message>
@@ -581,6 +624,21 @@
     <message>
         <source>Clear</source>
         <translation>Effacer</translation>
+    </message>
+</context>
+<context>
+    <name>SkippedBlockRow</name>
+    <message>
+        <source>SKIPPED AT %1</source>
+        <translation>PASSÉ À %1</translation>
+    </message>
+    <message>
+        <source>RESTORE</source>
+        <translation>RESTAURER</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Restaurer</translation>
     </message>
 </context>
 <context>
