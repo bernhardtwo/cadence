@@ -4,6 +4,7 @@
 #include "eventlog.hpp"
 #include "fileprogressstore.hpp"
 #include "language.hpp"
+#include "quotes.hpp"
 #include "settings.hpp"
 #include "singleinstance.hpp"
 #include "spotifyplayer.hpp"
@@ -19,6 +20,7 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QFile>
 #include <QFont>
 #include <QFontDatabase>
 #include <QMetaEnum>
@@ -41,6 +43,7 @@ void loadBundledFonts() {
     const QStringList files = {
         u":/fonts/BigShouldersDisplay/BigShouldersDisplay-Variable.ttf"_s,
         u":/fonts/Archivo/Archivo-Variable.ttf"_s,
+        u":/fonts/NotoSerif/NotoSerif-Italic.ttf"_s,
     };
     for (const QString& file : files) {
         if (QFontDatabase::addApplicationFont(file) < 0) {
@@ -84,6 +87,15 @@ QString instanceKey() {
         key += u"-test"_s;
     }
     return key;
+}
+
+QString readResource(const QString& path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning("Missing resource %s", qPrintable(path));
+        return {};
+    }
+    return QString::fromUtf8(file.readAll());
 }
 
 void showWindow(QQuickWindow* window) {
@@ -156,6 +168,10 @@ int main(int argc, char* argv[]) {
 
     EventLog eventLog(apppaths::dataDir() + u"/logs"_s);
     EventLog::setInstance(&eventLog);
+
+    QuoteProvider quotes(readResource(u":/quotes/quotes.json"_s),
+                         apppaths::dataDir() + u"/quotes-state.json"_s);
+    QuoteProvider::setInstance(&quotes);
     eventLog.write(u"start version %1"_s.arg(QString::fromUtf8(cadence::core::versionString())));
 
     // The editor keeps its own copy; the controller takes the document it will run the day from.

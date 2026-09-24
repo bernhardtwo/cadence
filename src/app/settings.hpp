@@ -22,6 +22,8 @@ class Settings : public QObject {
     Q_PROPERTY(bool warnDayNoLongerFits READ warnDayNoLongerFits WRITE setWarnDayNoLongerFits NOTIFY changed)
     Q_PROPERTY(int defaultReps READ defaultReps WRITE setDefaultReps NOTIFY changed)
     Q_PROPERTY(QString language READ language WRITE setLanguage NOTIFY changed)
+    Q_PROPERTY(bool showQuotes READ showQuotes WRITE setShowQuotes NOTIFY changed)
+    Q_PROPERTY(bool showQuoteOriginals READ showQuoteOriginals WRITE setShowQuoteOriginals NOTIFY changed)
     Q_PROPERTY(QString spotifyClientId READ spotifyClientId WRITE setSpotifyClientId NOTIFY changed)
     Q_PROPERTY(bool spotifyAutoplay READ spotifyAutoplay WRITE setSpotifyAutoplay NOTIFY changed)
     Q_PROPERTY(QString path READ path CONSTANT)
@@ -46,6 +48,8 @@ public:
     int defaultReps() const { return values_.defaultReps; }
     // "system" or a shipped code (en, es, fr).
     QString language() const { return QString::fromStdString(values_.language); }
+    bool showQuotes() const { return values_.showQuotes; }
+    bool showQuoteOriginals() const { return values_.showQuoteOriginals; }
     QString path() const { return path_; }
     QString error() const { return error_; }
 
@@ -56,6 +60,8 @@ public:
     void setWarnDayNoLongerFits(bool warn);
     void setDefaultReps(int reps);
     void setLanguage(const QString& language);
+    void setShowQuotes(bool show);
+    void setShowQuoteOriginals(bool show);
 
     QString spotifyClientId() const { return QString::fromStdString(values_.spotifyClientId); }
     void setSpotifyClientId(const QString& clientId);

@@ -190,6 +190,29 @@ Rectangle {
             font.letterSpacing: 1
         }
 
+        QuoteBlock {
+            id: cardQuote
+
+            anchors {
+                top: bigTop.bottom
+                topMargin: Theme.spacing16
+                left: parent.left
+            }
+            width: Math.min(Theme.quoteMaxWidthCard, parent.width - phaseColumn.width - Theme.spacing24)
+            // The room above the block name; the name, the timer and the phase group stay put.
+            maxHeight: bigName.y - cardQuote.y - Theme.spacing8
+            shown: root.accented
+            surface: "card"
+            // One quote per phase of the running block; a pause is not a new phase.
+            phaseKey: root.accented
+                      ? (DayController.pomodoroOnBreak ? "break" : "focus") + "/" + DayController.pomodoroIndex
+                      : ""
+            context: DayController.pomodoroOnBreak ? "break" : "focus"
+            variant: "card"
+            quoteColor: Theme.textOnAccent
+            attributionColor: Theme.quoteInkOnAccentMuted
+        }
+
         Text {
             anchors {
                 top: parent.top
@@ -242,6 +265,8 @@ Rectangle {
         }
 
         Column {
+            id: phaseColumn
+
             anchors {
                 right: parent.right
                 bottom: bigTimer.top

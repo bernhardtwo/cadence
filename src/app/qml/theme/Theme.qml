@@ -16,6 +16,10 @@ QtObject {
     readonly property color alert: "#FF6B3D"
     // Muted text on the accent surface, for the secondary line of the active block and the break overlay.
     readonly property color textOnAccentMuted: "#3A4410"
+    // Quote attribution and original line on the accent: dark olive, 8.3:1 against the accent.
+    readonly property color quoteInkOnAccentMuted: "#3F4A12"
+    // Quote text in focus mode: between text and textMuted.
+    readonly property color quoteTextOnDark: "#B5B2AA"
 
     // Fonts. The families are registered from the bundled TTFs at startup.
     readonly property string displayFamily: "Big Shoulders Display"
@@ -26,6 +30,9 @@ QtObject {
     readonly property int bodyWeightRegular: 400
     readonly property int bodyWeightMedium: 500
     readonly property int bodyWeightSemiBold: 600
+
+    // The Latin or Greek original under a quote: the only place this italic serif appears.
+    readonly property string quoteFamily: "Noto Serif"
 
     // Type scale in pixels. Ranges scale with the available space.
     readonly property int timerSizeMin: 160
@@ -40,6 +47,18 @@ QtObject {
     readonly property int overlayHeadlineSize: 88
     readonly property int bodySize: 15
     readonly property int labelSize: 13
+
+    // Quotes. Sizes per surface, the line heights of the design and the widest a quote may run.
+    readonly property int quoteSizeCard: 24
+    readonly property int quoteSizeFocus: 22
+    readonly property int quoteSizeOverlay: 34
+    readonly property int quoteOriginalSize: 16
+    readonly property real quoteLineHeightCard: 1.3
+    readonly property real quoteLineHeightOverlay: 1.25
+    readonly property int quoteMaxWidthCard: 520
+    readonly property int quoteMaxWidthFocus: 640
+    readonly property int quoteMinWidth: 240
+    readonly property int quoteGapFocus: 36
 
     // Shape and spacing
     readonly property int radius: 4

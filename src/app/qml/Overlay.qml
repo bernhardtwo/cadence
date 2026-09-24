@@ -38,11 +38,15 @@ Window {
         reps = overlay.defaultReps
         keysArmed = false
         armTimer.restart()
+        overlay.openings += 1
         showFullScreen()
         raise()
         requestActivate()
         EventLog.write("overlay shown " + newMode + " block=" + index)
     }
+
+    // Counts the openings: every one is a new appearance for its quote.
+    property int openings: 0
 
     Timer {
         id: armTimer
@@ -113,12 +117,52 @@ Window {
         font.pixelSize: Theme.displaySizeMin
     }
 
+    // Bottom left, level with the bottom of the centered stack and never under it.
+    QuoteBlock {
+        id: overlayQuote
+
+        readonly property real stackLeft: {
+            let left = stack.x + stack.width
+            for (const item of [detailText, headlineText, breakRow, doneRow, startRow, confirmRow]) {
+                if (item.visible) {
+                    const content = item.contentWidth !== undefined ? item.contentWidth : item.width
+                    left = Math.min(left, stack.x + (stack.width - content) / 2)
+                }
+            }
+            return left
+        }
+
+        anchors {
+            left: parent.left
+            leftMargin: Theme.spacing40
+            bottom: stack.bottom
+        }
+        width: Math.min(Theme.quoteMaxWidthCard, overlayQuote.stackLeft - Theme.spacing40 * 2)
+        shown: overlayQuote.width >= Theme.quoteMinWidth
+        surface: "overlay"
+        // A push-up prompt turns the break into the push-up surface, which draws from its own group.
+        phaseKey: overlay.visible && overlay.mode !== "unconfirmed"
+                  ? overlay.openings + "/" + overlay.mode + (overlay.showPushups ? "/pushups" : "")
+                  : ""
+        context: overlay.mode === "break" ? (overlay.showPushups ? "pushups" : "break")
+               : overlay.mode === "blockStart" ? "blockStart" : "blockEnd"
+        variant: "overlay"
+        showOriginal: Settings.showQuoteOriginals
+        quoteColor: overlay.ink
+        attributionColor: overlay.onAccent ? Theme.quoteInkOnAccentMuted : Theme.textMuted
+        originalColor: overlay.onAccent ? Theme.quoteInkOnAccentMuted : Theme.textMuted
+    }
+
     Column {
+        id: stack
+
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.spacing40 * 2, Theme.contentMaxWidth)
         spacing: Theme.spacing24
 
         Text {
+            id: detailText
+
             width: parent.width
             text: overlay.detail
             color: overlay.inkMuted
@@ -131,6 +175,8 @@ Window {
         }
 
         Text {
+            id: headlineText
+
             width: parent.width
             text: overlay.mode === "break" ? (overlay.showPushups ? qsTr("DROP AND GIVE ME") : qsTr("TAKE A BREAK")) : overlay.headline
             color: overlay.headlineColor
@@ -201,6 +247,8 @@ Window {
         }
 
         Row {
+            id: breakRow
+
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacing16
             visible: overlay.mode === "break"
@@ -241,6 +289,8 @@ Window {
         }
 
         Row {
+            id: doneRow
+
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacing16
             visible: overlay.mode === "done"
@@ -255,6 +305,8 @@ Window {
         }
 
         Row {
+            id: startRow
+
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacing16
             visible: overlay.mode === "blockStart"
@@ -284,6 +336,8 @@ Window {
         }
 
         Row {
+            id: confirmRow
+
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacing16
             visible: overlay.mode === "unconfirmed"

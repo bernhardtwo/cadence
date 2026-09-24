@@ -21,6 +21,8 @@ qt_add_executable(cadence
     language.cpp
     language.hpp
     progressstore.hpp
+    quotes.cpp
+    quotes.hpp
     settings.cpp
     settings.hpp
     singleinstance.cpp
@@ -50,6 +52,7 @@ set(CADENCE_QML_FILES
     qml/Overlay.qml
     qml/PlaylistPicker.qml
     qml/PomodoroGrid.qml
+    qml/QuoteBlock.qml
     qml/SettingsScreen.qml
     qml/SignalButton.qml
     qml/SignalChoice.qml
@@ -89,7 +92,13 @@ qt_add_resources(cadence "cadence_fonts"
     BASE fonts
     FILES
         fonts/BigShouldersDisplay/BigShouldersDisplay-Variable.ttf
-        fonts/Archivo/Archivo-Variable.ttf)
+        fonts/Archivo/Archivo-Variable.ttf
+        fonts/NotoSerif/NotoSerif-Italic.ttf)
+
+qt_add_resources(cadence "cadence_quotes"
+    PREFIX "/quotes"
+    BASE "${PROJECT_SOURCE_DIR}/resources/quotes"
+    FILES "${PROJECT_SOURCE_DIR}/resources/quotes/quotes.json")
 
 qt_add_resources(cadence "cadence_templates"
     PREFIX "/templates"

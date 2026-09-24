@@ -14,6 +14,10 @@ Rectangle {
     readonly property int remaining: root.pomodoro ? DayController.pomodoroRemainingSeconds : DayController.remainingSeconds
     readonly property int length: root.pomodoro ? DayController.pomodoroPhaseSeconds : DayController.currentDurationMinutes * 60
     readonly property real progress: root.length > 0 ? Math.min(1, Math.max(0, 1 - root.remaining / root.length)) : 0
+    // Counts the times focus mode came on screen: each entry is a new appearance for its quote.
+    property int entries: 0
+
+    onVisibleChanged: if (root.visible) root.entries += 1
 
     function mmss(seconds) {
         const clamped = Math.max(0, seconds)
@@ -78,6 +82,23 @@ Rectangle {
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
             font.pixelSize: Math.min(Theme.timerSizeMax, Math.max(Theme.timerSizeMin, Math.round(root.height * 0.45)))
+        }
+
+        QuoteBlock {
+            id: focusQuote
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(Theme.quoteMaxWidthFocus, parent.width)
+            topPadding: Theme.quoteGapFocus - parent.spacing
+            horizontalAlignment: Text.AlignHCenter
+            surface: "focus"
+            phaseKey: root.visible
+                      ? root.entries + "/" + (DayController.pomodoroOnBreak ? "break" : "focus") + "/" + DayController.pomodoroIndex
+                      : ""
+            context: DayController.pomodoroOnBreak ? "break" : "focus"
+            variant: "focus"
+            quoteColor: Theme.quoteTextOnDark
+            attributionColor: Theme.textMuted
         }
 
         Rectangle {

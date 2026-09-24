@@ -176,6 +176,22 @@ void Settings::setLanguage(const QString& language) {
     save();
 }
 
+void Settings::setShowQuotes(bool show) {
+    if (values_.showQuotes == show) {
+        return;
+    }
+    values_.showQuotes = show;
+    save();
+}
+
+void Settings::setShowQuoteOriginals(bool show) {
+    if (values_.showQuoteOriginals == show) {
+        return;
+    }
+    values_.showQuoteOriginals = show;
+    save();
+}
+
 void Settings::setSpotifyClientId(const QString& clientId) {
     const std::string trimmed = clientId.trimmed().toStdString();
     if (values_.spotifyClientId == trimmed) {
