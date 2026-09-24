@@ -41,6 +41,9 @@ The single instance socket only understands `show`. Add a `quit` command (and a 
 sends it) so a deployment script can close the running copy cleanly instead of terminating the
 process. Progress is persisted on every action, so termination loses nothing today, but a
 cooperative shutdown is the right tool once there is state that is not written immediately.
+Until then `scripts/deploy-windows.ps1` terminates the process and, after the relaunch, polls
+until exactly one process runs from the target folder for three consecutive seconds, so a slow
+start or a second instance handing over to the first cannot pass as a healthy deploy.
 
 ## System media controls fallback
 

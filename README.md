@@ -37,6 +37,8 @@ and `docs/quotes.md`.
 - `cadence --minimized` starts hidden in the tray. `--enable-autostart` and `--disable-autostart`
   register or remove launch at login and exit; the tray menu and the Settings screen toggle the
   same setting.
+- On Windows, `scripts/deploy-windows.ps1` replaces the copy you run every day with the current
+  release build; see `docs/deploy.md` for when it is safe and how to roll back.
 
 ### Music
 
