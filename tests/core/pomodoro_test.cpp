@@ -389,3 +389,29 @@ TEST_CASE("restore after a completed last phase replays the rest on the next tic
     CHECK(std::get<SessionCompleted>(events[0]).at == at(9, 55));
     CHECK(session->state() == PomodoroState::Completed);
 }
+
+TEST_CASE("finishing by hand closes the open phase and its open pause", "[pomodoro][records]") {
+    std::vector<PhaseRecord> phases = {
+        PhaseRecord{PhaseKind::Focus, 0, sod(9, 0), sod(9, 25)},
+        PhaseRecord{PhaseKind::ShortBreak, 0, sod(9, 25)},
+    };
+    phases.back().pauses.push_back(PhasePause{sod(9, 27), std::nullopt});
+
+    CHECK(closeOpenPhase(phases, sod(9, 28)));
+    CHECK(phases[0].end == sod(9, 25));
+    CHECK(phases[1].end == sod(9, 28));
+    CHECK(phases[1].pauses[0].end == sod(9, 28));
+    CHECK_FALSE(phases[1].skipped);
+
+    // Nothing open: nothing changes.
+    CHECK_FALSE(closeOpenPhase(phases, sod(9, 30)));
+    CHECK(phases[1].end == sod(9, 28));
+    std::vector<PhaseRecord> none;
+    CHECK_FALSE(closeOpenPhase(none, sod(9, 30)));
+}
+
+TEST_CASE("closing never ends a phase before it started", "[pomodoro][records]") {
+    std::vector<PhaseRecord> phases = {PhaseRecord{PhaseKind::Focus, 0, sod(9, 0)}};
+    CHECK(closeOpenPhase(phases, sod(8, 59)));
+    CHECK(phases[0].end == sod(9, 0));
+}

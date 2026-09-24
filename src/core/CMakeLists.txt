@@ -13,6 +13,7 @@ add_library(cadence_core STATIC
     include/cadence/core/time.hpp
     include/cadence/core/version.hpp
     src/alarm.cpp
+    src/phase.cpp
     src/block.cpp
     src/planner.cpp
     src/pomodoro.cpp

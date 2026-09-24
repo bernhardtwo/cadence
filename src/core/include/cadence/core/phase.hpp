@@ -52,4 +52,8 @@ struct PromptRecord {
     friend bool operator==(const PromptRecord&, const PromptRecord&) = default;
 };
 
+// Ends the last phase, and a pause still open inside it, at the given time. Used when the block
+// is finished or skipped by hand so no record is ever left open. Returns whether anything closed.
+bool closeOpenPhase(std::vector<PhaseRecord>& phases, Seconds at) noexcept;
+
 } // namespace cadence::core
