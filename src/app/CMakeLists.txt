@@ -54,6 +54,7 @@ set(CADENCE_QML_FILES
     qml/SignalToggle.qml
     qml/StatsScreen.qml
     qml/TemplatesScreen.qml
+    qml/TimerText.qml
     qml/TodayScreen.qml
     qml/TopBar.qml)
 
