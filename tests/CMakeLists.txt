@@ -61,14 +61,19 @@ catch_discover_tests(cadence_spotify_tests)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickTest)
 
 qt_add_executable(cadence_qml_tests qml/main.cpp)
+set_target_properties(cadence_qml_tests PROPERTIES AUTOMOC ON)
 
 target_link_libraries(cadence_qml_tests PRIVATE
     cadence_themeplugin
     Qt6::Quick
     Qt6::QuickTest)
 
+# The compiled catalogs come out of the app target; the retranslation test installs them.
+add_dependencies(cadence_qml_tests cadence)
+
 target_compile_definitions(cadence_qml_tests PRIVATE
-    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml")
+    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml"
+    CADENCE_QM_DIR="${CMAKE_BINARY_DIR}/src/app")
 
 add_test(NAME cadence_qml_tests COMMAND cadence_qml_tests -import "${CMAKE_BINARY_DIR}/qml")
 set_tests_properties(cadence_qml_tests PROPERTIES
