@@ -96,7 +96,7 @@
     </message>
     <message>
         <source>Soft</source>
-        <translation>Indicatif</translation>
+        <translation>Rappel</translation>
     </message>
     <message>
         <source>Idle</source>
@@ -327,7 +327,7 @@
     </message>
     <message>
         <source>DROP AND GIVE ME</source>
-        <translation>AU SOL, DONNEZ-MOI</translation>
+        <translation>AU SOL</translation>
     </message>
     <message>
         <source>TAKE A BREAK</source>
@@ -665,7 +665,7 @@
     </message>
     <message>
         <source>Soft</source>
-        <translation>Indicatif</translation>
+        <translation>Rappel</translation>
     </message>
     <message>
         <source>unknown activity id &quot;%1&quot;</source>
@@ -839,7 +839,7 @@
     </message>
     <message>
         <source>Soft</source>
-        <translation>Indicatif</translation>
+        <translation>Rappel</translation>
     </message>
     <message>
         <source>Earliest start</source>
@@ -910,7 +910,7 @@
     </message>
     <message>
         <source>Revert</source>
-        <translation>Rétablir</translation>
+        <translation>Annuler les modifications</translation>
     </message>
     <message>
         <source>Delete</source>

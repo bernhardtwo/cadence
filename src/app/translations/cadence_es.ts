@@ -96,7 +96,7 @@
     </message>
     <message>
         <source>Soft</source>
-        <translation>Orientativo</translation>
+        <translation>Recordatorio</translation>
     </message>
     <message>
         <source>Idle</source>
@@ -327,7 +327,7 @@
     </message>
     <message>
         <source>DROP AND GIVE ME</source>
-        <translation>AL SUELO Y DAME</translation>
+        <translation>AL SUELO</translation>
     </message>
     <message>
         <source>TAKE A BREAK</source>
@@ -665,7 +665,7 @@
     </message>
     <message>
         <source>Soft</source>
-        <translation>Orientativo</translation>
+        <translation>Recordatorio</translation>
     </message>
     <message>
         <source>unknown activity id &quot;%1&quot;</source>
@@ -839,7 +839,7 @@
     </message>
     <message>
         <source>Soft</source>
-        <translation>Orientativo</translation>
+        <translation>Recordatorio</translation>
     </message>
     <message>
         <source>Earliest start</source>
