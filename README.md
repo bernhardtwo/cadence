@@ -34,6 +34,13 @@ implemented yet.
   register or remove launch at login and exit; the tray menu and the Settings screen toggle the
   same setting.
 
+### Music
+
+Cadence can drive the Spotify desktop app through the Web API: a default playlist per activity, a
+player row in focus mode and a now playing line on Today. Every user registers their own Spotify
+app and pastes its Client ID in Settings; Premium is required to control playback. See
+`docs/spotify.md` for the setup and the troubleshooting tool.
+
 ### Keyboard
 
 | Key | Action |
@@ -43,6 +50,7 @@ implemented yet.
 | Esc | Leave focus mode or dismiss an overlay |
 | Return | Primary action of an overlay |
 | Ctrl+1 to Ctrl+4 | Today, Stats, Templates, Settings |
+| Ctrl+Space, Ctrl+Right, Ctrl+Left | Play or pause, next, previous, in focus mode when connected to Spotify |
 
 ## Screenshots
 
@@ -54,7 +62,7 @@ Screenshots will be added once the first usable milestone lands.
 | --- | --- |
 | CMake | 3.24 or newer |
 | Ninja | any recent release |
-| Qt | 6.11.2 with the Multimedia module |
+| Qt | 6.11.2 with the Multimedia and Network Authorization modules |
 | Compiler | MSVC 2022 or newer, GCC 12 or newer, Clang 15 or newer, AppleClang 15 or newer |
 
 Point CMake at your Qt installation either with `CMAKE_PREFIX_PATH` or by setting the `QT_ROOT`

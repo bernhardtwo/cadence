@@ -29,3 +29,10 @@ The single instance socket only understands `show`. Add a `quit` command (and a 
 sends it) so a deployment script can close the running copy cleanly instead of terminating the
 process. Progress is persisted on every action, so termination loses nothing today, but a
 cooperative shutdown is the right tool once there is state that is not written immediately.
+
+## System media controls fallback
+
+Cadence drives Spotify through the Web API only. When the account is not Premium, or Spotify is
+unreachable, the OS media session could still control whatever plays locally: SMTC on Windows,
+MPRIS on Linux, the media remote command center on macOS. Play, pause, next and previous would
+work for any player, with no track metadata or playlists. Out of scope for the music milestone.
