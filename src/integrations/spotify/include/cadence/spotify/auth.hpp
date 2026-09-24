@@ -11,6 +11,7 @@
 
 class QOAuth2AuthorizationCodeFlow;
 class QOAuthHttpServerReplyHandler;
+class QTimer;
 
 namespace cadence::spotify {
 
@@ -84,7 +85,7 @@ private:
     std::string verifier_;
     std::set<std::string> grantedScopes_;
     std::vector<std::function<void(bool)>> pending_;
-    class QTimer* refreshTimer_;
+    QTimer* refreshTimer_;
 };
 
 } // namespace cadence::spotify

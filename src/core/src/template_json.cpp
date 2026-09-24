@@ -267,42 +267,46 @@ void validateBlock(const BlockTemplate& block, const std::set<ActivityId>& known
     }
     if (!needsStart && block.start) {
         issues.push_back({location, "flexible blocks are placed in sequence and do not take a start time",
-                          IssueCode::StartNotAllowed});
+                          IssueCode::StartNotAllowed, {}});
     }
     if (block.start && !isValidTimeOfDay(*block.start)) {
-        issues.push_back({location, "start must lie between 00:00 and 23:59", IssueCode::StartOutOfRange});
+        issues.push_back(
+            {location, "start must lie between 00:00 and 23:59", IssueCode::StartOutOfRange, {}});
     }
 
     if (block.durationMinutes && *block.durationMinutes <= Minutes{0}) {
-        issues.push_back({location, "duration must be greater than zero", IssueCode::DurationNotPositive});
+        issues.push_back(
+            {location, "duration must be greater than zero", IssueCode::DurationNotPositive, {}});
     }
     if (block.pomodoro) {
         const PomodoroPlan& plan = *block.pomodoro;
         if (plan.focus <= Minutes{0}) {
             issues.push_back(
-                {location, "pomodoro focus must be greater than zero", IssueCode::FocusNotPositive});
+                {location, "pomodoro focus must be greater than zero", IssueCode::FocusNotPositive, {}});
         }
         if (plan.shortBreak < Minutes{0} || plan.longBreak < Minutes{0}) {
-            issues.push_back({location, "pomodoro breaks cannot be negative", IssueCode::BreakNegative});
+            issues.push_back({location, "pomodoro breaks cannot be negative", IssueCode::BreakNegative, {}});
         }
         if (plan.longBreakEvery < 0) {
             issues.push_back(
-                {location, "longBreakEvery cannot be negative", IssueCode::LongBreakEveryNegative});
+                {location, "longBreakEvery cannot be negative", IssueCode::LongBreakEveryNegative, {}});
         }
         if (plan.count && *plan.count <= 0) {
             issues.push_back(
-                {location, "pomodoro count must be greater than zero", IssueCode::CountNotPositive});
+                {location, "pomodoro count must be greater than zero", IssueCode::CountNotPositive, {}});
         }
     }
 
     const std::optional<Minutes> duration = resolvedDuration(block);
     if (!duration) {
         issues.push_back({location, "a block needs a duration or a pomodoro plan with a count",
-                          IssueCode::DurationMissing});
+                          IssueCode::DurationMissing, {}});
     } else if (*duration <= Minutes{0}) {
         if (!block.durationMinutes) {
-            issues.push_back(
-                {location, "the pomodoro plan resolves to a zero duration", IssueCode::ZeroResolvedDuration});
+            issues.push_back({location,
+                              "the pomodoro plan resolves to a zero duration",
+                              IssueCode::ZeroResolvedDuration,
+                              {}});
         }
     } else if (block.start && isValidTimeOfDay(*block.start) && *block.start + *duration > minutesPerDay) {
         const std::string start = formatTimeOfDay(*block.start);
@@ -317,16 +321,18 @@ void validateBlock(const BlockTemplate& block, const std::set<ActivityId>& known
 void validateDay(const DayTemplate& day, const std::set<ActivityId>& known, const std::string& location,
                  std::vector<ValidationIssue>& issues) {
     if (!isValidTimeOfDay(day.dayStart)) {
-        issues.push_back(
-            {join(location, "dayStart"), "must lie between 00:00 and 23:59", IssueCode::DayStartOutOfRange});
+        issues.push_back({join(location, "dayStart"),
+                          "must lie between 00:00 and 23:59",
+                          IssueCode::DayStartOutOfRange,
+                          {}});
     }
     if (!isValidTimeOfDay(day.dayCutoff)) {
         issues.push_back({join(location, "dayCutoff"), "must lie between 00:00 and 23:59",
-                          IssueCode::DayCutoffOutOfRange});
+                          IssueCode::DayCutoffOutOfRange, {}});
     }
     if (day.dayCutoff <= day.dayStart) {
         issues.push_back(
-            {join(location, "dayCutoff"), "must be later than dayStart", IssueCode::CutoffBeforeStart});
+            {join(location, "dayCutoff"), "must be later than dayStart", IssueCode::CutoffBeforeStart, {}});
     }
 
     const std::string blocksLocation = join(location, "blocks");
@@ -374,7 +380,7 @@ std::vector<ValidationIssue> validate(const TemplateDocument& document) {
         const Activity& activity = document.activities[i];
         const std::string location = indexed("activities", i);
         if (activity.id.empty()) {
-            issues.push_back({location, "activity id cannot be empty", IssueCode::ActivityIdEmpty});
+            issues.push_back({location, "activity id cannot be empty", IssueCode::ActivityIdEmpty, {}});
         } else if (!known.insert(activity.id).second) {
             issues.push_back({location,
                               "duplicate activity id \"" + activity.id + "\"",
@@ -383,7 +389,7 @@ std::vector<ValidationIssue> validate(const TemplateDocument& document) {
         }
         if (!isHexColor(activity.color)) {
             issues.push_back(
-                {join(location, "color"), "expected a color formatted as #RRGGBB", IssueCode::BadColor});
+                {join(location, "color"), "expected a color formatted as #RRGGBB", IssueCode::BadColor, {}});
         }
     }
 
