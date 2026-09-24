@@ -150,6 +150,10 @@ ApplicationWindow {
             SettingsScreen {
                 anchors.fill: parent
                 visible: root.currentScreen === 3
+                onChoosePlaylistRequested: function(activityId, activityName) {
+                    picker.forActivity = activityId
+                    picker.show("Playlist for " + activityName)
+                }
             }
         }
     }
@@ -158,6 +162,50 @@ ApplicationWindow {
         anchors.fill: parent
         visible: root.focusMode
         onExitRequested: root.exitFocusMode()
+        onPickPlaylistRequested: {
+            picker.forActivity = ""
+            picker.show("Play a playlist")
+        }
+    }
+
+    // One picker for both uses: playing now from focus mode, or choosing an activity's default.
+    PlaylistPicker {
+        id: picker
+
+        property string forActivity: ""
+
+        onChosen: function(uri, name) {
+            if (picker.forActivity.length > 0) {
+                Settings.setPlaylistFor(picker.forActivity, uri, name)
+            } else {
+                Spotify.playPlaylist(uri)
+            }
+        }
+    }
+
+    // The player is polled only while a screen that shows it is on screen.
+    Binding {
+        target: Spotify
+        property: "pollingEnabled"
+        value: root.visible && (root.focusMode || root.currentScreen === 0)
+    }
+
+    Shortcut {
+        sequence: "Ctrl+Right"
+        enabled: root.focusMode && Spotify.connected
+        onActivated: Spotify.next()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+Left"
+        enabled: root.focusMode && Spotify.connected
+        onActivated: Spotify.previous()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+Space"
+        enabled: root.focusMode && Spotify.connected
+        onActivated: Spotify.playPause()
     }
 
     Shortcut {

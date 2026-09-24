@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Cadence
 import Cadence.Theme
@@ -6,6 +7,13 @@ import Cadence.Theme
 // persists and applies the change at once.
 Item {
     id: root
+
+    // The window owns the playlist picker; the card only says which activity wants one.
+    signal choosePlaylistRequested(string activityId, string activityName)
+
+    function choosePlaylistFor(activityId, activityName) {
+        root.choosePlaylistRequested(activityId, activityName);
+    }
 
     component SectionTitle: Text {
         color: Theme.textMuted
@@ -22,127 +30,354 @@ Item {
         contentHeight: sections.height
         boundsBehavior: Flickable.StopAtBounds
 
-        Column {
+        Row {
             id: sections
 
             width: Math.min(parent.width, Theme.contentMaxWidth)
-            spacing: Theme.spacing32
+            spacing: Theme.spacing40
 
+            // Startup, alarms and push-ups on the left; the music card on the right so the whole
+            // screen fits the baseline window.
             Column {
-                spacing: Theme.spacing16
+                id: leftColumn
+                width: Theme.panelWidth + Theme.spacing40
+                spacing: Theme.spacing32
 
-                SectionTitle { text: "Startup" }
+                Column {
+                    spacing: Theme.spacing16
 
-                SignalToggle {
-                    label: "Launch at login"
-                    checked: Settings.launchAtLogin
-                    onToggled: function(checked) { Settings.launchAtLogin = checked }
-                }
+                    SectionTitle {
+                        text: "Startup"
+                    }
 
-                SignalToggle {
-                    label: "Start minimized to tray"
-                    checked: Settings.startMinimized
-                    onToggled: function(checked) { Settings.startMinimized = checked }
-                }
-            }
-
-            Column {
-                spacing: Theme.spacing16
-
-                SectionTitle { text: "Alarms" }
-
-                SignalChoice {
-                    label: "Sound"
-                    options: ["Default", "Soft", "Silent"]
-                    current: Settings.sound
-                    onChosen: function(option) { Settings.sound = option }
-                }
-
-                SignalField {
-                    label: "Max snoozes per block"
-                    numeric: true
-                    value: String(Settings.maxSnoozes)
-                    onCommitted: function(text) { Settings.maxSnoozes = parseInt(text) || 0 }
-                }
-
-                SignalToggle {
-                    label: "Warn when the day no longer fits"
-                    checked: Settings.warnDayNoLongerFits
-                    onToggled: function(checked) { Settings.warnDayNoLongerFits = checked }
-                }
-            }
-
-            Column {
-                spacing: Theme.spacing16
-
-                SectionTitle { text: "Push-ups" }
-
-                SignalField {
-                    label: "Default reps"
-                    numeric: true
-                    value: String(Settings.defaultReps)
-                    onCommitted: function(text) { Settings.defaultReps = parseInt(text) || 1 }
-                }
-            }
-
-            Column {
-                spacing: Theme.spacing16
-
-                SectionTitle { text: "Music" }
-
-                Rectangle {
-                    width: Theme.panelWidth
-                    height: Theme.buttonHeightLarge + Theme.spacing24
-                    radius: Theme.radius
-                    color: Theme.surface
-                    border.width: 1
-                    border.color: Theme.line
-                    opacity: 0.5
-
-                    Column {
-                        anchors {
-                            left: parent.left
-                            leftMargin: Theme.spacing16
-                            verticalCenter: parent.verticalCenter
+                    SignalToggle {
+                        label: "Launch at login"
+                        checked: Settings.launchAtLogin
+                        onToggled: function (checked) {
+                            Settings.launchAtLogin = checked;
                         }
-                        spacing: Theme.spacing4
+                    }
 
-                        Text {
-                            text: "Spotify: coming soon"
-                            color: Theme.text
-                            font.family: Theme.bodyFamily
-                            font.weight: Theme.bodyWeightSemiBold
-                            font.pixelSize: Theme.bodySize
+                    SignalToggle {
+                        label: "Start minimized to tray"
+                        checked: Settings.startMinimized
+                        onToggled: function (checked) {
+                            Settings.startMinimized = checked;
                         }
+                    }
+                }
 
-                        Text {
-                            text: "Focus playlists and break silence arrive with the music milestone"
-                            color: Theme.textMuted
-                            font.family: Theme.bodyFamily
-                            font.pixelSize: Theme.labelSize
+                Column {
+                    spacing: Theme.spacing16
+
+                    SectionTitle {
+                        text: "Alarms"
+                    }
+
+                    SignalChoice {
+                        label: "Sound"
+                        options: ["Default", "Soft", "Silent"]
+                        current: Settings.sound
+                        onChosen: function (option) {
+                            Settings.sound = option;
                         }
+                    }
+
+                    SignalField {
+                        label: "Max snoozes per block"
+                        numeric: true
+                        value: String(Settings.maxSnoozes)
+                        onCommitted: function (text) {
+                            Settings.maxSnoozes = parseInt(text) || 0;
+                        }
+                    }
+
+                    SignalToggle {
+                        label: "Warn when the day no longer fits"
+                        checked: Settings.warnDayNoLongerFits
+                        onToggled: function (checked) {
+                            Settings.warnDayNoLongerFits = checked;
+                        }
+                    }
+                }
+
+                Column {
+                    spacing: Theme.spacing16
+
+                    SectionTitle {
+                        text: "Push-ups"
+                    }
+
+                    SignalField {
+                        label: "Default reps"
+                        numeric: true
+                        value: String(Settings.defaultReps)
+                        onCommitted: function (text) {
+                            Settings.defaultReps = parseInt(text) || 1;
+                        }
+                    }
+                }
+
+                Column {
+                    spacing: Theme.spacing4
+
+                    Text {
+                        text: Settings.path
+                        color: Theme.textMuted
+                        font.family: Theme.bodyFamily
+                        font.pixelSize: Theme.labelSize
+                    }
+
+                    Text {
+                        visible: Settings.error.length > 0
+                        width: sections.width
+                        text: Settings.error
+                        color: Theme.alert
+                        wrapMode: Text.WrapAnywhere
+                        font.family: Theme.bodyFamily
+                        font.pixelSize: Theme.labelSize
                     }
                 }
             }
 
             Column {
-                spacing: Theme.spacing4
+                id: rightColumn
+                spacing: Theme.spacing16
 
-                Text {
-                    text: Settings.path
-                    color: Theme.textMuted
-                    font.family: Theme.bodyFamily
-                    font.pixelSize: Theme.labelSize
+                SectionTitle {
+                    text: "Music"
                 }
 
-                Text {
-                    visible: Settings.error.length > 0
-                    width: sections.width
-                    text: Settings.error
-                    color: Theme.alert
-                    wrapMode: Text.WrapAnywhere
-                    font.family: Theme.bodyFamily
-                    font.pixelSize: Theme.labelSize
+                // Spotify card: the user's own app, the fixed redirect, the connection and the
+                // playlist per activity.
+                Rectangle {
+                    id: card
+                    width: Theme.panelWidth + Theme.spacing40 * 2
+                    height: musicCard.height + Theme.spacing24 * 2
+                    radius: Theme.radius
+                    color: Theme.surface
+                    border.width: 1
+                    border.color: Theme.line
+
+                    Column {
+                        id: musicCard
+
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: Theme.spacing24
+                        }
+                        spacing: Theme.spacing16
+
+                        Text {
+                            text: "Spotify"
+                            color: Theme.text
+                            font.family: Theme.displayFamily
+                            font.weight: Theme.displayWeightExtraBold
+                            font.pixelSize: Theme.headingSizeMax
+                            font.capitalization: Font.AllUppercase
+                        }
+
+                        Column {
+                            spacing: Theme.spacing4
+
+                            Repeater {
+                                model: ["1. Create an app at developer.spotify.com and select the Web API.", "2. Add exactly this redirect URI to the app: " + Spotify.redirectUri, "3. Paste the app's Client ID below. No client secret is needed.", "4. Connect and log in. Spotify Premium is required to control playback.", "5. Development Mode apps allow up to five users; each user registers their own app."]
+
+                                Text {
+                                    id: guideLine
+
+                                    required property string modelData
+
+                                    width: musicCard.width
+                                    text: guideLine.modelData
+                                    color: Theme.textMuted
+                                    wrapMode: Text.Wrap
+                                    font.family: Theme.bodyFamily
+                                    font.pixelSize: Theme.labelSize
+                                }
+                            }
+                        }
+
+                        SignalField {
+                            width: parent.width
+                            label: "Client ID"
+                            placeholder: "32 characters from your Spotify app"
+                            value: Settings.spotifyClientId
+                            onCommitted: function (text) {
+                                Settings.spotifyClientId = text;
+                            }
+                        }
+
+                        Row {
+                            spacing: Theme.spacing12
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: Theme.spacing4
+
+                                Text {
+                                    text: "REDIRECT URI"
+                                    color: Theme.textMuted
+                                    font.family: Theme.bodyFamily
+                                    font.weight: Theme.bodyWeightMedium
+                                    font.pixelSize: Theme.labelSize
+                                    font.letterSpacing: 1
+                                }
+
+                                Text {
+                                    text: Spotify.redirectUri
+                                    color: Theme.text
+                                    font.family: Theme.bodyFamily
+                                    font.pixelSize: Theme.bodySize
+                                }
+                            }
+
+                            SignalButton {
+                                anchors.verticalCenter: parent.verticalCenter
+                                kind: "outline"
+                                text: "Copy"
+                                onClicked: Spotify.copyToClipboard(Spotify.redirectUri)
+                            }
+                        }
+
+                        Row {
+                            spacing: Theme.spacing12
+
+                            SignalButton {
+                                text: Spotify.connecting ? "Connecting" : "Connect"
+                                primary: true
+                                visible: !Spotify.connected
+                                enabled: Spotify.configured && !Spotify.connecting
+                                onClicked: Spotify.connectAccount()
+                            }
+
+                            SignalButton {
+                                kind: "outline"
+                                text: "Disconnect"
+                                visible: Spotify.connected
+                                onClicked: Spotify.disconnectAccount()
+                            }
+
+                            SignalButton {
+                                text: "Reconnect to update permissions"
+                                primary: true
+                                visible: Spotify.connected && Spotify.needsReconsent
+                                onClicked: Spotify.connectAccount()
+                            }
+                        }
+
+                        Column {
+                            width: parent.width
+                            spacing: Theme.spacing4
+
+                            Text {
+                                width: parent.width
+                                text: Spotify.statusText
+                                color: Spotify.connected ? Theme.text : Theme.textMuted
+                                wrapMode: Text.Wrap
+                                font.family: Theme.bodyFamily
+                                font.weight: Theme.bodyWeightMedium
+                                font.pixelSize: Theme.bodySize
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: Spotify.premiumWarning
+                                text: "Spotify Premium is required to control playback"
+                                color: Theme.alert
+                                wrapMode: Text.Wrap
+                                font.family: Theme.bodyFamily
+                                font.weight: Theme.bodyWeightMedium
+                                font.pixelSize: Theme.bodySize
+                            }
+
+                            Text {
+                                width: parent.width
+                                visible: Spotify.errorText.length > 0
+                                text: Spotify.errorText
+                                color: Theme.alert
+                                wrapMode: Text.Wrap
+                                font.family: Theme.bodyFamily
+                                font.pixelSize: Theme.labelSize
+                            }
+                        }
+
+                        SignalToggle {
+                            label: "Start the activity's playlist when its block starts"
+                            checked: Settings.spotifyAutoplay
+                            onToggled: function (checked) {
+                                Settings.spotifyAutoplay = checked;
+                            }
+                        }
+
+                        Text {
+                            text: "DEFAULT PLAYLIST PER ACTIVITY"
+                            color: Theme.textMuted
+                            font.family: Theme.bodyFamily
+                            font.weight: Theme.bodyWeightMedium
+                            font.pixelSize: Theme.labelSize
+                            font.letterSpacing: 1
+                        }
+
+                        Column {
+                            width: parent.width
+                            spacing: Theme.spacing8
+
+                            Repeater {
+                                model: DayController.activities
+
+                                Row {
+                                    id: activityRow
+
+                                    required property var modelData
+
+                                    width: musicCard.width
+                                    spacing: Theme.spacing12
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: Theme.fieldWidth
+                                        text: activityRow.modelData.name
+                                        color: Theme.text
+                                        elide: Text.ElideRight
+                                        font.family: Theme.displayFamily
+                                        font.weight: Theme.displayWeightSemiBold
+                                        font.pixelSize: Theme.headingSizeMin
+                                        font.capitalization: Font.AllUppercase
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: activityRow.width - Theme.fieldWidth - chooseButton.width - clearButton.width - Theme.spacing12 * 3
+                                        text: Settings.playlistNameFor(activityRow.modelData.id).length > 0 ? Settings.playlistNameFor(activityRow.modelData.id) : "None"
+                                        color: Theme.textMuted
+                                        elide: Text.ElideRight
+                                        font.family: Theme.bodyFamily
+                                        font.pixelSize: Theme.bodySize
+                                    }
+
+                                    SignalButton {
+                                        id: chooseButton
+
+                                        text: "Choose"
+                                        enabled: Spotify.connected
+                                        onClicked: root.choosePlaylistFor(activityRow.modelData.id, activityRow.modelData.name)
+                                    }
+
+                                    SignalButton {
+                                        id: clearButton
+
+                                        kind: "outline"
+                                        text: "Clear"
+                                        enabled: Settings.playlistUriFor(activityRow.modelData.id).length > 0
+                                        onClicked: Settings.clearPlaylistFor(activityRow.modelData.id)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
