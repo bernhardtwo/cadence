@@ -44,10 +44,14 @@ std::optional<PomodoroSession> PomodoroSession::fromTemplate(const BlockTemplate
 
 std::optional<PomodoroSession> PomodoroSession::restore(const BlockTemplate& block,
                                                         const std::vector<PhaseRecord>& history,
-                                                        std::chrono::local_days day) noexcept {
+                                                        std::chrono::local_days day,
+                                                        std::optional<int> count) noexcept {
     std::optional<PomodoroSession> session = fromTemplate(block);
     if (!session || history.empty()) {
         return std::nullopt;
+    }
+    if (count && *count > 0) {
+        session->count_ = *count;
     }
     const PhaseRecord& last = history.back();
     const PomodoroState phase = stateOf(last.kind);

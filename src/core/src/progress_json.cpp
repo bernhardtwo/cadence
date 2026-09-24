@@ -261,6 +261,21 @@ Json toJson(const BlockProgress& progress) {
         }
         out["prompts"] = std::move(prompts);
     }
+    if (!progress.skips.empty()) {
+        Json skips = Json::array();
+        for (const SkipInterval& skip : progress.skips) {
+            Json item;
+            item["at"] = minutesValue(skip.at);
+            if (skip.restoredAt) {
+                item["restoredAt"] = minutesValue(*skip.restoredAt);
+            }
+            skips.push_back(std::move(item));
+        }
+        out["skips"] = std::move(skips);
+    }
+    if (progress.pomodoroCount) {
+        out["pomodoroCount"] = *progress.pomodoroCount;
+    }
     return out;
 }
 
@@ -313,6 +328,25 @@ BlockProgress parseBlock(const Json& value, const std::string& location) {
             progress.prompts.push_back(
                 parsePromptRecord((*prompts)[i], promptsLocation + "[" + std::to_string(i) + "]"));
         }
+    }
+    // Files written before skips were timed carry only the flag.
+    if (const Json* skips = optionalMember(value, "skips", location)) {
+        const std::string skipsLocation = location + ".skips";
+        if (!skips->is_array()) {
+            fail(skipsLocation, "expected an array");
+        }
+        for (std::size_t i = 0; i < skips->size(); ++i) {
+            const std::string skipLocation = skipsLocation + "[" + std::to_string(i) + "]";
+            const Json& item = (*skips)[i];
+            progress.skips.push_back(SkipInterval{asMinutes(requireMember(item, "at", skipLocation), skipLocation + ".at"),
+                                                  optionalMinutes(item, "restoredAt", skipLocation)});
+        }
+    }
+    if (const Json* count = optionalMember(value, "pomodoroCount", location)) {
+        if (!count->is_number_integer()) {
+            fail(location + ".pomodoroCount", "expected an integer");
+        }
+        progress.pomodoroCount = count->get<int>();
     }
     return progress;
 }

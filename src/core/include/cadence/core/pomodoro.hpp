@@ -57,10 +57,12 @@ public:
 
     // Rebuilds a session from the phases recorded for the block, positioned in the last recorded
     // phase with its pauses applied. A phase that already ended is caught up by the next tick.
-    // Empty when the block has no plan or nothing was recorded.
+    // Empty when the block has no plan or nothing was recorded. `count` replaces the template's
+    // count, for a session that was started over the time left after a restore.
     static std::optional<PomodoroSession> restore(const BlockTemplate& block,
                                                   const std::vector<PhaseRecord>& history,
-                                                  std::chrono::local_days day) noexcept;
+                                                  std::chrono::local_days day,
+                                                  std::optional<int> count = std::nullopt) noexcept;
 
     PomodoroEvents start(Instant now);
     PomodoroEvents pause(Instant now);

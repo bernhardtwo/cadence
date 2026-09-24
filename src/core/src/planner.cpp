@@ -102,11 +102,35 @@ std::vector<std::size_t> DayPlan::overrunsCutoff() const {
     return indices;
 }
 
-Minutes DayPlan::completedMinutes() const noexcept {
+Minutes skippedWithin(const BlockProgress& progress, Minutes start, Minutes end) noexcept {
+    Minutes total{0};
+    for (const SkipInterval& skip : progress.skips) {
+        if (!skip.restoredAt) {
+            continue;
+        }
+        const Minutes from = std::max(start, skip.at);
+        const Minutes to = std::min(end, *skip.restoredAt);
+        total += std::max(Minutes{0}, to - from);
+    }
+    return total;
+}
+
+Minutes nominalEnd(Minutes start, const BlockTemplate& block, const BlockProgress& progress) noexcept {
+    Minutes end = start + resolvedDuration(block).value_or(Minutes{0}) + progress.extended;
+    for (const PauseInterval& pause : progress.pauses) {
+        if (pause.end) {
+            end += std::max(Minutes{0}, *pause.end - pause.start);
+        }
+    }
+    return end;
+}
+
+Minutes DayPlan::completedMinutes(const DayProgress& progress) const noexcept {
     Minutes total{0};
     for (const PlannedBlock& block : blocks) {
         if (block.state == BlockState::Done) {
-            total += std::max(Minutes{0}, block.end - block.start);
+            total += std::max(Minutes{0}, block.end - block.start) -
+                     skippedWithin(progressFor(progress, block.templateIndex), block.start, block.end);
         }
     }
     return total;

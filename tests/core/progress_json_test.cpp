@@ -20,6 +20,9 @@ DayProgress sampleProgress() {
     progress.at(2).postponed = true;
     progress.at(2).pauses.push_back(PauseInterval{timeOfDay(16, 0), std::nullopt});
     progress.at(3).confirmed = false;
+    progress.at(1).skips.push_back(SkipInterval{timeOfDay(11, 50), std::nullopt});
+    progress.at(0).skips.push_back(SkipInterval{timeOfDay(12, 5), timeOfDay(12, 20)});
+    progress.at(0).pomodoroCount = 6;
     progress.pushups.push_back(PushupSet{0, timeOfDay(9, 30), 10});
     progress.pushups.push_back(PushupSet{0, timeOfDay(10, 0), 12});
     return progress;
@@ -53,6 +56,24 @@ TEST_CASE("only the fields that carry information are written", "[progress]") {
     CHECK_THAT(text, !ContainsSubstring("postponed"));
     CHECK_THAT(text, !ContainsSubstring("extended"));
     CHECK_THAT(text, !ContainsSubstring("confirmed"));
+    CHECK_THAT(text, !ContainsSubstring("skips"));
+    CHECK_THAT(text, !ContainsSubstring("pomodoroCount"));
+}
+
+TEST_CASE("a skip and its restore are written on the block record", "[progress]") {
+    DayProgress progress;
+    progress.at(0).skips.push_back(SkipInterval{timeOfDay(12, 5), timeOfDay(12, 20)});
+    progress.at(0).pomodoroCount = 6;
+    const std::string text = serializeDayProgress(progress);
+    CHECK_THAT(text, ContainsSubstring("\"skips\""));
+    CHECK_THAT(text, ContainsSubstring("\"at\": 725"));
+    CHECK_THAT(text, ContainsSubstring("\"restoredAt\": 740"));
+    CHECK_THAT(text, ContainsSubstring("\"pomodoroCount\": 6"));
+    CHECK(parseDayProgress(text) == progress);
+    CHECK_THROWS_WITH(parseDayProgress(R"({"version": 1, "blocks": {"0": {"skips": [{"restoredAt": 5}]}}})"),
+                      ContainsSubstring("blocks.0.skips[0]: missing \"at\""));
+    CHECK_THROWS_WITH(parseDayProgress(R"({"version": 1, "blocks": {"0": {"pomodoroCount": "six"}}})"),
+                      ContainsSubstring("blocks.0.pomodoroCount: expected an integer"));
 }
 
 TEST_CASE("progress parse errors name the offending element", "[progress]") {
@@ -105,6 +126,9 @@ TEST_CASE("a progress file written before phases were recorded still loads", "[p
     REQUIRE(progress.find(3) != nullptr);
     CHECK(progress.find(3)->phases.empty());
     CHECK(progress.find(3)->prompts.empty());
+    CHECK(progress.find(1)->skipped);
+    CHECK(progress.find(1)->skips.empty());
+    CHECK_FALSE(progress.find(1)->pomodoroCount);
     CHECK(progress.find(0)->actualEnd == timeOfDay(14, 45));
     CHECK(serializeDayProgress(progress).find("phases") == std::string::npos);
 }

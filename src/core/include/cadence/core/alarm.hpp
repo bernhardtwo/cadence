@@ -57,6 +57,10 @@ public:
     int snoozesUsed(std::size_t blockIndex) const noexcept;
     // Cancels a pending snooze, for when the user acted on the block another way.
     void dismiss(std::size_t blockIndex);
+    // Forgets everything fired for one block, so a restored block alarms again as if it had never
+    // been skipped. Instants already past still cannot fire: only what falls due after the last
+    // evaluation does.
+    void rearm(std::size_t blockIndex);
 
     const AlarmPolicy& policy() const noexcept { return policy_; }
     // Takes effect on the next evaluation; snoozes already used keep counting against the new limit.

@@ -266,7 +266,7 @@ TEST_CASE("an untouched anchored block whose time has passed is unconfirmed", "[
 
         CHECK(result.at(0).state == BlockState::Unconfirmed);
         CHECK(result.unconfirmedBlocks() == std::vector<std::size_t>{0});
-        CHECK(result.completedMinutes() == 0min);
+        CHECK(result.completedMinutes(DayProgress{}) == 0min);
     }
 
     SECTION("confirming it makes it done and counts its planned length") {
@@ -276,7 +276,7 @@ TEST_CASE("an untouched anchored block whose time has passed is unconfirmed", "[
 
         expectBlock(result, 0, timeOfDay(8, 30), timeOfDay(15, 0), BlockState::Done);
         CHECK(result.unconfirmedBlocks().empty());
-        CHECK(result.completedMinutes() == 390min);
+        CHECK(result.completedMinutes(progress) == 390min);
     }
 
     SECTION("denying it makes it skipped") {
@@ -286,7 +286,7 @@ TEST_CASE("an untouched anchored block whose time has passed is unconfirmed", "[
 
         CHECK(result.at(0).state == BlockState::Skipped);
         CHECK(result.unconfirmedBlocks().empty());
-        CHECK(result.completedMinutes() == 0min);
+        CHECK(result.completedMinutes(progress) == 0min);
     }
 
     SECTION("a block still running at the clock is active, not unconfirmed") {
@@ -315,7 +315,7 @@ TEST_CASE("completed minutes only count blocks that are done", "[planner]") {
 
     CHECK(result.at(1).state == BlockState::Done);
     CHECK(result.at(2).state == BlockState::Active);
-    CHECK(result.completedMinutes() == 390min + 45min);
+    CHECK(result.completedMinutes(progress) == 390min + 45min);
 }
 
 TEST_CASE("finished blocks keep their actual times and the chain continues from them", "[planner]") {

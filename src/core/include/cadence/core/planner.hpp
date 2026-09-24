@@ -30,6 +30,14 @@ struct PauseInterval {
     friend bool operator==(const PauseInterval&, const PauseInterval&) = default;
 };
 
+struct SkipInterval {
+    Minutes at;
+    // Empty while the block is still skipped.
+    std::optional<Minutes> restoredAt;
+
+    friend bool operator==(const SkipInterval&, const SkipInterval&) = default;
+};
+
 struct BlockProgress {
     std::optional<Minutes> actualStart;
     std::optional<Minutes> actualEnd;
@@ -42,9 +50,20 @@ struct BlockProgress {
     // The pomodoro session of the block, phase by phase, and the push-up prompts it showed.
     std::vector<PhaseRecord> phases;
     std::vector<PromptRecord> prompts;
+    // Every skip of the block and, once restored, when. `skipped` says whether the last one is open.
+    std::vector<SkipInterval> skips;
+    // The count a restore started the pomodoro session with, so a restart rebuilds the same plan.
+    std::optional<int> pomodoroCount;
 
     friend bool operator==(const BlockProgress&, const BlockProgress&) = default;
 };
+
+// Minutes of [start, end) that fell between a skip and its restore. Time skipped is never worked.
+Minutes skippedWithin(const BlockProgress& progress, Minutes start, Minutes end) noexcept;
+
+// Where a block that begins at `start` ends by its own length: duration, extensions and finished
+// pauses. Unlike the plan, it never stretches to the clock.
+Minutes nominalEnd(Minutes start, const BlockTemplate& block, const BlockProgress& progress) noexcept;
 
 struct PushupSet {
     std::size_t blockIndex;
@@ -87,8 +106,9 @@ struct DayPlan {
     std::vector<std::size_t> unconfirmedBlocks() const;
     // Template indices of Active blocks that will end after the cutoff. Independent of doesNotFit().
     std::vector<std::size_t> overrunsCutoff() const;
-    // Sum of the planned length of Done blocks, the basis for any statistics.
-    Minutes completedMinutes() const noexcept;
+    // Sum of the planned length of Done blocks less the time they spent skipped, the basis for any
+    // statistics.
+    Minutes completedMinutes(const DayProgress& progress) const noexcept;
     const PlannedBlock& at(std::size_t templateIndex) const { return blocks.at(templateIndex); }
 };
 

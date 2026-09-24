@@ -38,6 +38,25 @@ std::optional<ActivityId> summaryActivity(const DayTemplate& day, const std::vec
     return longest->first;
 }
 
+Minutes workedMinutes(const PlannedBlock& planned, const BlockProgress* progress, Minutes now) noexcept {
+    static const BlockProgress none{};
+    const BlockProgress& prog = progress ? *progress : none;
+    if (planned.state == BlockState::Done) {
+        return std::max(Minutes{0},
+                        planned.end - planned.start - skippedWithin(prog, planned.start, planned.end));
+    }
+    if (planned.state != BlockState::Active) {
+        return Minutes{0};
+    }
+    const Minutes until = std::clamp(now, planned.start, planned.end);
+    Minutes elapsed = until - planned.start;
+    for (const PauseInterval& pause : prog.pauses) {
+        elapsed -= std::max(Minutes{0}, pause.end.value_or(now) - pause.start);
+    }
+    elapsed -= skippedWithin(prog, planned.start, until);
+    return std::max(Minutes{0}, elapsed);
+}
+
 ActivitySummary summarizeActivity(const DayTemplate& day, const DayPlan& plan, const DayProgress& progress,
                                   const ActivityId& activity, Minutes now) {
     ActivitySummary summary;
@@ -51,16 +70,8 @@ ActivitySummary summarizeActivity(const DayTemplate& day, const DayPlan& plan, c
             continue;
         }
         const PlannedBlock& planned = plan.at(i);
-        if (planned.state == BlockState::Done) {
-            summary.done += std::max(Minutes{0}, planned.end - planned.start);
-        } else if (planned.state == BlockState::Active) {
-            Minutes elapsed = std::clamp(now, planned.start, planned.end) - planned.start;
-            if (const BlockProgress* prog = progress.find(i)) {
-                for (const PauseInterval& pause : prog->pauses) {
-                    elapsed -= std::max(Minutes{0}, pause.end.value_or(now) - pause.start);
-                }
-            }
-            summary.done += std::max(Minutes{0}, elapsed);
+        if (planned.state == BlockState::Done || planned.state == BlockState::Active) {
+            summary.done += workedMinutes(planned, progress.find(i), now);
         }
     }
     return summary;

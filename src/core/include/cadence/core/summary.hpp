@@ -23,6 +23,11 @@ struct ActivitySummary {
 // one with the most template time today. Empty on a day without blocks.
 std::optional<ActivityId> summaryActivity(const DayTemplate& day, const std::vector<Activity>& activities);
 
+// What a Done or Active block contributed by `now`: a finished block its planned length, a running
+// one its elapsed time without pauses, both less the time between a skip and its restore. Zero for
+// every other state. `progress` may be null.
+Minutes workedMinutes(const PlannedBlock& planned, const BlockProgress* progress, Minutes now) noexcept;
+
 ActivitySummary summarizeActivity(const DayTemplate& day, const DayPlan& plan, const DayProgress& progress,
                                   const ActivityId& activity, Minutes now);
 

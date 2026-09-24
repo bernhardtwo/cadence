@@ -9,6 +9,7 @@ add_library(cadence_core STATIC
     include/cadence/core/pomodoro.hpp
     include/cadence/core/progress_json.hpp
     include/cadence/core/quotes.hpp
+    include/cadence/core/restore.hpp
     include/cadence/core/settings_json.hpp
     include/cadence/core/summary.hpp
     include/cadence/core/template_json.hpp
@@ -22,6 +23,7 @@ add_library(cadence_core STATIC
     src/pomodoro.cpp
     src/progress_json.cpp
     src/quotes.cpp
+    src/restore.cpp
     src/settings_json.cpp
     src/summary.cpp
     src/template_json.cpp

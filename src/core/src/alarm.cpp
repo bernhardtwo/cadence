@@ -141,6 +141,12 @@ void AlarmScheduler::dismiss(std::size_t blockIndex) {
     snoozeUntil_.erase(blockIndex);
 }
 
+void AlarmScheduler::rearm(std::size_t blockIndex) {
+    std::erase_if(fired_, [blockIndex](const Key& key) { return key.block == blockIndex; });
+    snoozes_.erase(blockIndex);
+    snoozeUntil_.erase(blockIndex);
+}
+
 void AlarmScheduler::reset() {
     last_.reset();
     fired_.clear();
