@@ -125,6 +125,40 @@ Item {
             font.pixelSize: Theme.bodySize
         }
 
+        // Compact now playing line, only while connected.
+        Row {
+            width: parent.width
+            spacing: Theme.spacing8
+            visible: Spotify.connected
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.spacing24
+                height: Theme.spacing24
+                radius: Theme.radius
+                color: Theme.surfaceMuted
+
+                Image {
+                    anchors.fill: parent
+                    source: Spotify.imageUrl
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - Theme.spacing24 - Theme.spacing8
+                text: Spotify.hasActiveDevice
+                      ? (Spotify.isPlaying ? "Playing " : "Paused ") + Spotify.trackName + " · " + Spotify.artists
+                      : "Open Spotify on this PC"
+                color: Theme.textMuted
+                elide: Text.ElideRight
+                font.family: Theme.bodyFamily
+                font.pixelSize: Theme.labelSize
+            }
+        }
+
         Item {
             width: 1
             height: Theme.spacing8

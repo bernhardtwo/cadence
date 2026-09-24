@@ -112,8 +112,14 @@ Rectangle {
         }
     }
 
-    // Reserved for the music controls of the Spotify milestone.
-    Row {
+    signal pickPlaylistRequested()
+
+    function mmssMs(ms) {
+        return root.mmss(Math.floor(Math.max(0, ms) / 1000))
+    }
+
+    // Music: what plays, the transport, the progress and the playlist pills.
+    Item {
         id: musicRow
 
         anchors {
@@ -122,7 +128,159 @@ Rectangle {
             bottom: parent.bottom
             margins: Theme.spacing40
         }
-        height: Theme.buttonHeightLarge
-        visible: false
+        height: Theme.buttonHeightLarge * 2
+        visible: Spotify.connected
+
+        Rectangle {
+            id: cover
+
+            anchors {
+                left: parent.left
+                verticalCenter: parent.verticalCenter
+            }
+            width: Theme.buttonHeightLarge
+            height: Theme.buttonHeightLarge
+            radius: Theme.radius
+            color: Theme.surface
+
+            Image {
+                anchors.fill: parent
+                source: Spotify.imageUrl
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+            }
+        }
+
+        Column {
+            id: nowPlaying
+
+            anchors {
+                left: cover.right
+                leftMargin: Theme.spacing16
+                right: transport.left
+                rightMargin: Theme.spacing16
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: Theme.spacing4
+
+            Text {
+                width: parent.width
+                text: Spotify.hasActiveDevice ? Spotify.trackName : "Open Spotify on this PC"
+                color: Theme.text
+                elide: Text.ElideRight
+                font.family: Theme.bodyFamily
+                font.weight: Theme.bodyWeightSemiBold
+                font.pixelSize: Theme.bodySize
+            }
+
+            Text {
+                width: parent.width
+                text: Spotify.hasActiveDevice ? Spotify.artists : (Spotify.errorText.length > 0 ? Spotify.errorText : "")
+                color: Theme.textMuted
+                elide: Text.ElideRight
+                font.family: Theme.bodyFamily
+                font.pixelSize: Theme.labelSize
+            }
+
+            Rectangle {
+                width: parent.width
+                height: Theme.progressBarHeight
+                radius: Theme.radius
+                color: Theme.surface
+
+                Rectangle {
+                    width: Spotify.durationMs > 0 ? parent.width * Math.min(1, Spotify.progressMs / Spotify.durationMs) : 0
+                    height: parent.height
+                    radius: Theme.radius
+                    color: Theme.accent
+                }
+            }
+        }
+
+        Row {
+            id: transport
+
+            anchors {
+                right: pills.left
+                rightMargin: Theme.spacing24
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: Theme.spacing8
+
+            SignalButton {
+                visible: Spotify.canTransferHere
+                kind: "primary"
+                text: "Play here"
+                onClicked: Spotify.transferHere()
+            }
+
+            SignalButton {
+                text: "Prev"
+                enabled: Spotify.hasActiveDevice
+                onClicked: Spotify.previous()
+            }
+
+            SignalButton {
+                kind: "light"
+                text: Spotify.isPlaying ? "Pause" : "Play"
+                enabled: Spotify.hasActiveDevice || Spotify.canTransferHere
+                onClicked: Spotify.playPause()
+            }
+
+            SignalButton {
+                text: "Next"
+                enabled: Spotify.hasActiveDevice
+                onClicked: Spotify.next()
+            }
+        }
+
+        // The activity's default playlist first, then the first library playlists, then the picker.
+        Row {
+            id: pills
+
+            anchors {
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+            }
+            spacing: Theme.spacing4
+
+            readonly property string activityId: DayController.currentActivityId
+            readonly property string defaultUri: Settings.playlistUriFor(pills.activityId)
+            readonly property string defaultName: Settings.playlistNameFor(pills.activityId)
+            readonly property var entries: {
+                const list = []
+                if (pills.defaultUri.length > 0) {
+                    list.push({ uri: pills.defaultUri, name: pills.defaultName })
+                }
+                for (const item of Spotify.playlists) {
+                    if (list.length >= 4) {
+                        break
+                    }
+                    if (item.uri !== pills.defaultUri) {
+                        list.push({ uri: item.uri, name: item.name })
+                    }
+                }
+                return list
+            }
+
+            Repeater {
+                model: pills.entries
+
+                NavPill {
+                    id: pill
+
+                    required property var modelData
+
+                    text: pill.modelData.name
+                    active: Spotify.contextUri === pill.modelData.uri
+                    onClicked: Spotify.playPlaylist(pill.modelData.uri)
+                }
+            }
+
+            NavPill {
+                text: "+"
+                onClicked: root.pickPlaylistRequested()
+            }
+        }
     }
 }
