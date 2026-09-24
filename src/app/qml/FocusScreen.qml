@@ -70,8 +70,9 @@ Rectangle {
             font.letterSpacing: 2
         }
 
-        Text {
+        TimerText {
             anchors.horizontalCenter: parent.horizontalCenter
+            horizontalAlignment: Text.AlignHCenter
             text: root.mmss(root.remaining)
             color: DayController.paused ? Theme.textMuted : Theme.accent
             font.family: Theme.displayFamily
@@ -93,8 +94,9 @@ Rectangle {
             }
         }
 
-        Text {
+        TimerText {
             anchors.horizontalCenter: parent.horizontalCenter
+            horizontalAlignment: Text.AlignHCenter
             visible: root.pomodoro
             text: "Block ends " + DayController.currentEndText + " · " + DayController.remainingText + " left"
             color: Theme.textMuted

@@ -221,7 +221,7 @@ Rectangle {
             font.capitalization: Font.AllUppercase
         }
 
-        Text {
+        TimerText {
             id: bigTimer
 
             anchors {
@@ -229,6 +229,7 @@ Rectangle {
                 bottom: parent.bottom
                 bottomMargin: -Theme.spacing12
             }
+            horizontalAlignment: Text.AlignRight
             text: !root.isActive
                   ? (DayController.remainingSeconds > 0 ? DayController.remainingText : "READY")
                   : DayController.hasPomodoro ? root.mmss(DayController.pomodoroRemainingSeconds)
@@ -260,8 +261,9 @@ Rectangle {
                 font.letterSpacing: 1
             }
 
-            Text {
+            TimerText {
                 anchors.right: parent.right
+                horizontalAlignment: Text.AlignRight
                 visible: root.isActive && DayController.hasPomodoro
                 text: "Block ends " + root.block.end + " · " + DayController.remainingText + " left"
                 color: root.inkMuted

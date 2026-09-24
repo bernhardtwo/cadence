@@ -98,12 +98,13 @@ Window {
         font.letterSpacing: 2
     }
 
-    Text {
+    TimerText {
         anchors {
             right: parent.right
             top: parent.top
             margins: Theme.spacing40
         }
+        horizontalAlignment: Text.AlignRight
         visible: overlay.mode === "break" && DayController.pomodoroOnBreak
         text: overlay.mmss(DayController.pomodoroRemainingSeconds)
         color: overlay.ink

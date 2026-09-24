@@ -53,11 +53,12 @@ Item {
         }
     }
 
-    Text {
+    TimerText {
         anchors {
             right: parent.right
             verticalCenter: parent.verticalCenter
         }
+        horizontalAlignment: Text.AlignRight
         text: DayController.summaryText
         color: Theme.textMuted
         font.family: Theme.bodyFamily
