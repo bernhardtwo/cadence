@@ -25,7 +25,10 @@ implemented yet.
   (`templates/week.json` under the Cadence app config location) and edited from the Templates
   screen or by hand.
 - Settings live next to it in `settings.json`.
-- Progress is written per day under the app data location, in `progress/YYYY-MM-DD.json`.
+- Progress is written per day under the app data location, in `progress/YYYY-MM-DD.json`,
+  including every pomodoro phase, so a restart resumes the running phase where it was.
+- A daily log of alarms, overlays and push-up sets lives next to it in `logs/YYYY-MM-DD.log`,
+  kept for 14 days.
 - Closing the window hides Cadence to the tray; Quit in the tray menu exits.
 - `cadence --minimized` starts hidden in the tray. `--enable-autostart` and `--disable-autostart`
   register or remove launch at login and exit; the tray menu and the Settings screen toggle the
