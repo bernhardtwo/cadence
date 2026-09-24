@@ -82,6 +82,12 @@ void SpotifyAuth::configureFlow() {
         QDesktopServices::openUrl(url);
     });
     connect(flow_, &QAbstractOAuth::granted, this, &SpotifyAuth::onGranted);
+    // Only error bodies are logged: a successful token reply carries the tokens themselves.
+    connect(flow_, &QAbstractOAuth2::replyDataReceived, this, [this](const QByteArray& data) {
+        if (data.contains("\"error\"") && !data.contains("_token")) {
+            emit logMessage(u"spotify token endpoint said: "_s + QString::fromUtf8(data.left(300)));
+        }
+    });
     connect(flow_, &QAbstractOAuth2::serverReportedErrorOccurred, this,
             [this](const QString& error, const QString& description, const QUrl&) {
                 onFailed(description.isEmpty() ? error : error + u": "_s + description);
