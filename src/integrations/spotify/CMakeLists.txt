@@ -24,9 +24,6 @@ endif()
 # Qt part: the PKCE flow, the credential store and the Web API client.
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Network NetworkAuth)
 
-# qtkeychain declares option(BUILD_SHARED_LIBS ON), which would leak into the cache and turn every
-# later dependency (Catch2 included) into a DLL. Everything fetched here is linked statically.
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Fetched dependencies are linked statically" FORCE)
 set(BUILD_TEST_APPLICATION OFF CACHE BOOL "" FORCE)
 set(BUILD_TRANSLATIONS OFF CACHE BOOL "" FORCE)
 set(BUILD_WITH_QT6 ON CACHE BOOL "" FORCE)

@@ -18,6 +18,11 @@ if(MSVC)
     add_compile_options(/utf-8)
 endif()
 
+# Every fetched dependency links statically. qtkeychain declares option(BUILD_SHARED_LIBS ON),
+# which would otherwise leak into the cache and turn Catch2 and the rest into DLLs the test
+# executables cannot find. Forced here, before the first FetchContent, so it cannot recur.
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Fetched dependencies are linked statically" FORCE)
+
 # JSON is fetched once here so the Qt free libraries under src/ share it.
 include(FetchContent)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
