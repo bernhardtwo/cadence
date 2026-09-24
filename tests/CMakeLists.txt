@@ -74,6 +74,7 @@ add_dependencies(cadence_qml_tests cadence)
 
 target_compile_definitions(cadence_qml_tests PRIVATE
     QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml"
+    CADENCE_QML_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/app/qml"
     CADENCE_QM_DIR="${CMAKE_BINARY_DIR}/src/app")
 
 add_test(NAME cadence_qml_tests COMMAND cadence_qml_tests -import "${CMAKE_BINARY_DIR}/qml")

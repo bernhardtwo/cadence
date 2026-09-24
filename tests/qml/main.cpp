@@ -1,9 +1,11 @@
 #include <QCoreApplication>
+#include <QList>
 #include <QObject>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QString>
 #include <QTranslator>
+#include <QUrl>
 #include <QtQuickTest/quicktest.h>
 
 using namespace Qt::StringLiterals;
@@ -117,6 +119,33 @@ private:
     bool showOriginals_ = false;
 };
 
+// Stand-in for the day controller: records the restores a component asks for.
+class TestDayController : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(int restoreCount READ restoreCount NOTIFY changed)
+    Q_PROPERTY(int lastRestored READ lastRestored NOTIFY changed)
+
+public:
+    using QObject::QObject;
+
+    int restoreCount() const { return restores_.size(); }
+    int lastRestored() const { return restores_.isEmpty() ? -1 : restores_.last(); }
+    Q_INVOKABLE void restore(int blockIndex) {
+        restores_.push_back(blockIndex);
+        emit changed();
+    }
+    Q_INVOKABLE void reset() {
+        restores_.clear();
+        emit changed();
+    }
+
+signals:
+    void changed();
+
+private:
+    QList<int> restores_;
+};
+
 class Setup : public QObject {
     Q_OBJECT
 
@@ -126,10 +155,16 @@ public slots:
         auto* language = new TestLanguage(engine);
         auto* quotes = new TestQuotes(engine);
         auto* settings = new TestSettings(engine);
+        auto* day = new TestDayController(engine);
         qmlRegisterModule("Cadence", 1, 0);
         qmlRegisterSingletonInstance("Cadence", 1, 0, "Language", language);
         qmlRegisterSingletonInstance("Cadence", 1, 0, "Quotes", quotes);
         qmlRegisterSingletonInstance("Cadence", 1, 0, "Settings", settings);
+        qmlRegisterSingletonInstance("Cadence", 1, 0, "DayController", day);
+        // The module's QML files live in the app's resources; the one component a row under test
+        // instantiates is registered from its source instead.
+        qmlRegisterType(QUrl::fromLocalFile(QString::fromUtf8(CADENCE_QML_SOURCE_DIR) + u"/SignalButton.qml"_s),
+                        "Cadence", 1, 0, "SignalButton");
         engine->rootContext()->setContextProperty(u"testLanguage"_s, language);
     }
 };
