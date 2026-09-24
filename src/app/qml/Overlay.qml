@@ -35,9 +35,16 @@ Window {
         showFullScreen()
         raise()
         requestActivate()
+        EventLog.write("overlay shown " + newMode + " block=" + index)
     }
 
-    function dismiss() {
+    // reason names what closed the overlay: escape, or the action the user took.
+    function dismiss(reason) {
+        const why = reason === undefined ? "escape" : reason
+        if (overlay.mode === "break" && overlay.showPushups && why !== "log-set") {
+            DayController.dismissPrompt()
+        }
+        EventLog.write("overlay " + (why === "escape" ? "dismissed" : "action") + " " + overlay.mode + " " + why)
         showPushups = false
         hide()
     }
@@ -58,12 +65,16 @@ Window {
         onActivated: {
             if (overlay.mode === "blockStart") {
                 DayController.start()
+                overlay.dismiss("start")
             } else if (overlay.mode === "break" && overlay.showPushups) {
                 DayController.logPushups(overlay.reps)
+                overlay.dismiss("log-set")
             } else if (overlay.mode === "unconfirmed") {
                 DayController.confirm(overlay.blockIndex, true)
+                overlay.dismiss("confirm-yes")
+            } else {
+                overlay.dismiss("continue")
             }
-            overlay.dismiss()
         }
     }
 
@@ -197,7 +208,7 @@ Window {
                 display: true
                 text: "LOG SET"
                 width: Theme.buttonHeightLarge * 4
-                onClicked: { DayController.logPushups(overlay.reps); overlay.dismiss() }
+                onClicked: { DayController.logPushups(overlay.reps); overlay.dismiss("log-set") }
             }
 
             SignalButton {
@@ -206,7 +217,7 @@ Window {
                 display: true
                 text: "CONTINUE"
                 width: Theme.buttonHeightLarge * 4
-                onClicked: overlay.dismiss()
+                onClicked: overlay.dismiss("continue")
             }
 
             SignalButton {
@@ -218,8 +229,10 @@ Window {
                 onClicked: {
                     if (!overlay.showPushups) {
                         DayController.skipPhase()
+                        overlay.dismiss("skip-break")
+                    } else {
+                        overlay.dismiss("skip")
                     }
-                    overlay.dismiss()
                 }
             }
         }
@@ -234,7 +247,7 @@ Window {
                 primary: true
                 display: true
                 width: Theme.buttonHeightLarge * 4
-                onClicked: overlay.dismiss()
+                onClicked: overlay.dismiss("continue")
             }
         }
 
@@ -248,7 +261,7 @@ Window {
                 primary: true
                 display: true
                 width: Theme.buttonHeightLarge * 4
-                onClicked: { DayController.start(); overlay.dismiss() }
+                onClicked: { DayController.start(); overlay.dismiss("start") }
             }
 
             SignalButton {
@@ -256,14 +269,14 @@ Window {
                 text: "Snooze 5 min"
                 implicitHeight: Theme.buttonHeightLarge
                 visible: DayController.canSnooze(overlay.blockIndex)
-                onClicked: { DayController.snooze(overlay.blockIndex); overlay.dismiss() }
+                onClicked: { DayController.snooze(overlay.blockIndex); overlay.dismiss("snooze") }
             }
 
             SignalButton {
                 kind: "outline"
                 text: "Skip"
                 implicitHeight: Theme.buttonHeightLarge
-                onClicked: { DayController.skip(); overlay.dismiss() }
+                onClicked: { DayController.skip(); overlay.dismiss("skip-block") }
             }
         }
 
@@ -277,7 +290,7 @@ Window {
                 primary: true
                 display: true
                 width: Theme.buttonHeightLarge * 3
-                onClicked: { DayController.confirm(overlay.blockIndex, true); overlay.dismiss() }
+                onClicked: { DayController.confirm(overlay.blockIndex, true); overlay.dismiss("confirm-yes") }
             }
 
             SignalButton {
@@ -285,7 +298,7 @@ Window {
                 text: "No"
                 implicitHeight: Theme.buttonHeightLarge
                 width: Theme.buttonHeightLarge * 3
-                onClicked: { DayController.confirm(overlay.blockIndex, false); overlay.dismiss() }
+                onClicked: { DayController.confirm(overlay.blockIndex, false); overlay.dismiss("confirm-no") }
             }
         }
     }

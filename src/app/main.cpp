@@ -1,6 +1,7 @@
 #include "alarmsounds.hpp"
 #include "apppaths.hpp"
 #include "daycontroller.hpp"
+#include "eventlog.hpp"
 #include "fileprogressstore.hpp"
 #include "settings.hpp"
 #include "singleinstance.hpp"
@@ -16,6 +17,7 @@
 #include <QCommandLineParser>
 #include <QFont>
 #include <QFontDatabase>
+#include <QMetaEnum>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
@@ -146,6 +148,10 @@ int main(int argc, char* argv[]) {
     Settings settings(apppaths::configDir() + u"/settings.json"_s, *autostart);
     Settings::setInstance(&settings);
 
+    EventLog eventLog(apppaths::dataDir() + u"/logs"_s);
+    EventLog::setInstance(&eventLog);
+    eventLog.write(u"start version %1"_s.arg(QString::fromUtf8(cadence::core::versionString())));
+
     // The editor keeps its own copy; the controller takes the document it will run the day from.
     TemplateEditor editor(templateLoad.document, templateLoad.path);
     TemplateEditor::setInstance(&editor);
@@ -157,6 +163,28 @@ int main(int argc, char* argv[]) {
     QObject::connect(&editor, &TemplateEditor::saved, &controller,
                      [&controller](const cadence::core::TemplateDocument& document) {
                          controller.setDocument(document, {});
+                     });
+
+    QObject::connect(&controller, &DayController::alarmRaised, &eventLog,
+                     [&eventLog](int kind, int blockIndex, const QString& title, const QString&) {
+                         const QMetaEnum names = QMetaEnum::fromType<DayController::Alarm>();
+                         eventLog.write(u"alarm %1 block=%2 %3"_s
+                                            .arg(QString::fromLatin1(names.valueToKey(kind)))
+                                            .arg(blockIndex)
+                                            .arg(title));
+                     });
+    QObject::connect(&controller, &DayController::pushupPrompt, &eventLog, [&eventLog](int blockIndex, int setIndex) {
+        eventLog.write(u"prompt pushups block=%1 set=%2"_s.arg(blockIndex).arg(setIndex));
+    });
+    QObject::connect(&controller, &DayController::pushupsLogged, &eventLog, [&eventLog](int blockIndex, int reps) {
+        eventLog.write(u"pushups block=%1 reps=%2"_s.arg(blockIndex).arg(reps));
+    });
+    QObject::connect(&controller, &DayController::sessionRestored, &eventLog,
+                     [&eventLog](int blockIndex, const QString& phase, int remaining) {
+                         eventLog.write(u"session restored block=%1 phase=%2 remaining=%3s"_s
+                                            .arg(blockIndex)
+                                            .arg(phase)
+                                            .arg(remaining));
                      });
 
     // Settings drive the runtime directly; the screen only edits them.

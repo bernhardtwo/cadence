@@ -13,6 +13,8 @@ qt_add_executable(cadence
     apppaths.hpp
     daycontroller.cpp
     daycontroller.hpp
+    eventlog.cpp
+    eventlog.hpp
     fileprogressstore.cpp
     fileprogressstore.hpp
     progressstore.hpp

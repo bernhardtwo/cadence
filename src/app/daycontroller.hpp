@@ -151,6 +151,8 @@ public:
     Q_INVOKABLE void finish();
     Q_INVOKABLE void confirm(int blockIndex, bool happened);
     Q_INVOKABLE void logPushups(int reps);
+    // The user closed the push-up prompt without logging a set.
+    Q_INVOKABLE void dismissPrompt();
     Q_INVOKABLE bool snooze(int blockIndex);
     Q_INVOKABLE bool canSnooze(int blockIndex) const;
     Q_INVOKABLE QString blockName(int blockIndex) const;
@@ -163,11 +165,17 @@ signals:
     void changed();
     void alarmRaised(int kind, int blockIndex, const QString& title, const QString& message);
     void pushupPrompt(int blockIndex, int setIndex);
+    void pushupsLogged(int blockIndex, int reps);
+    // A restart rebuilt a running pomodoro session from the progress file.
+    void sessionRestored(int blockIndex, const QString& phase, int remainingSeconds);
 
 private:
     // withAlarms is false for the constructor's pass, which runs before anything listens.
     void evaluate(cadence::core::Instant now, bool withAlarms = true);
-    void loadDay(cadence::core::Date date);
+    void loadDay(cadence::core::Date date, cadence::core::Instant now);
+    void restoreSession(cadence::core::Instant now);
+    cadence::core::Seconds secondOfDay(cadence::core::Instant instant) const;
+    void closeOpenPhase(cadence::core::Seconds at);
     void persist();
     void applyPomodoroEvents(const cadence::core::PomodoroEvents& events, cadence::core::Instant now);
     void raise(const cadence::core::Alarm& alarm);
@@ -200,4 +208,11 @@ private:
     std::optional<std::size_t> current_;
     cadence::core::Instant now_{};
     bool warnDayNoLongerFits_ = true;
+    // A restore made in the constructor is announced once ticking starts, when listeners exist.
+    struct Restored {
+        int blockIndex;
+        QString phase;
+        int remainingSeconds;
+    };
+    std::optional<Restored> restored_;
 };

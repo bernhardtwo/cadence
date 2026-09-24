@@ -119,6 +119,10 @@ void DayController::setInstance(DayController* instance) {
 
 void DayController::startTicking() {
     timer_.start();
+    if (restored_) {
+        emit sessionRestored(restored_->blockIndex, restored_->phase, restored_->remainingSeconds);
+        restored_.reset();
+    }
     evaluateNow();
 }
 
@@ -161,7 +165,7 @@ void DayController::evaluate(Instant now, bool withAlarms) {
     now_ = now;
     const TimePoint point = toTimePoint(now);
     if (date_ != point.date) {
-        loadDay(point.date);
+        loadDay(point.date, now);
     }
 
     PomodoroEvents events;
@@ -187,7 +191,7 @@ void DayController::evaluate(Instant now, bool withAlarms) {
     emit changed();
 }
 
-void DayController::loadDay(Date date) {
+void DayController::loadDay(Date date, Instant now) {
     if (date_ && date_ != date) {
         persist();
     }
@@ -211,6 +215,46 @@ void DayController::loadDay(Date date) {
         if (!storageError_.isEmpty()) {
             qWarning("%s", qPrintable(storageError_));
         }
+        restoreSession(now);
+    }
+}
+
+// A running block with recorded phases gets its session back where it was; the next evaluation
+// catches up on whatever elapsed while the app was down. Blocks recorded before phases existed
+// keep running without a session, as they did before.
+void DayController::restoreSession(Instant now) {
+    const std::optional<std::size_t> running = runningIndex();
+    if (!running) {
+        return;
+    }
+    const BlockTemplate* tpl = block(*running);
+    const BlockProgress* prog = progress_.find(*running);
+    if (tpl == nullptr || prog == nullptr || prog->phases.empty() || !date_) {
+        return;
+    }
+    if (auto session = PomodoroSession::restore(*tpl, prog->phases, std::chrono::local_days{*date_})) {
+        session_ = std::move(session);
+        sessionBlock_ = *running;
+        restored_ = Restored{static_cast<int>(*running), phaseName(session_->activePhase()),
+                             static_cast<int>(session_->remaining(now).count())};
+        if (timer_.isActive()) {
+            emit sessionRestored(restored_->blockIndex, restored_->phase, restored_->remainingSeconds);
+            restored_.reset();
+        }
+    }
+}
+
+Seconds DayController::secondOfDay(Instant instant) const {
+    if (!date_) {
+        return Seconds{0};
+    }
+    return std::chrono::duration_cast<Seconds>(instant - std::chrono::local_days{*date_});
+}
+
+void DayController::closeOpenPhase(Seconds at) {
+    BlockProgress& prog = progress_.at(sessionBlock_);
+    if (!prog.phases.empty() && !prog.phases.back().end) {
+        prog.phases.back().end = at;
     }
 }
 
@@ -226,19 +270,30 @@ void DayController::persist() {
     }
 }
 
+// Every event lands in the block's progress so a restart can rebuild the session and the day can
+// be audited afterwards.
 void DayController::applyPomodoroEvents(const PomodoroEvents& events, Instant now) {
     for (const PomodoroEvent& event : events) {
-        if (const auto* prompt = std::get_if<PushupPrompt>(&event)) {
+        if (const auto* started = std::get_if<PhaseStarted>(&event)) {
+            closeOpenPhase(secondOfDay(started->at));
+            progress_.at(sessionBlock_)
+                .phases.push_back(
+                    PhaseRecord{phaseKindOf(started->phase), started->index, secondOfDay(started->at)});
+        } else if (const auto* prompt = std::get_if<PushupPrompt>(&event)) {
+            progress_.at(sessionBlock_).prompts.push_back(PromptRecord{prompt->setIndex, secondOfDay(now)});
             emit pushupPrompt(static_cast<int>(sessionBlock_), prompt->setIndex);
-        } else if (std::holds_alternative<SessionCompleted>(event)) {
+        } else if (const auto* completed = std::get_if<SessionCompleted>(&event)) {
+            closeOpenPhase(secondOfDay(completed->at));
             // The block's pomodoros are done, so the block is done.
             BlockProgress& prog = progress_.at(sessionBlock_);
             if (prog.actualStart && !prog.actualEnd) {
                 closeOpenPause(toTimePoint(now).minuteOfDay);
                 prog.actualEnd = toTimePoint(now).minuteOfDay;
-                persist();
             }
         }
+    }
+    if (!events.empty()) {
+        persist();
     }
 }
 
@@ -718,7 +773,13 @@ void DayController::pause() {
     }
     progress_.at(*runningIndex()).pauses.push_back(PauseInterval{nowMinute(), std::nullopt});
     if (session_) {
-        session_->pause(now_);
+        applyPomodoroEvents(session_->pause(now_), now_);
+        if (session_->state() == PomodoroState::Paused) {
+            BlockProgress& prog = progress_.at(sessionBlock_);
+            if (!prog.phases.empty() && !prog.phases.back().end) {
+                prog.phases.back().pauses.push_back(PhasePause{secondOfDay(now_), std::nullopt});
+            }
+        }
     }
     persist();
     evaluateNow();
@@ -730,6 +791,11 @@ void DayController::resume() {
     }
     closeOpenPause(nowMinute());
     if (session_) {
+        BlockProgress& prog = progress_.at(sessionBlock_);
+        if (!prog.phases.empty() && !prog.phases.back().pauses.empty() &&
+            !prog.phases.back().pauses.back().end) {
+            prog.phases.back().pauses.back().end = secondOfDay(now_);
+        }
         applyPomodoroEvents(session_->resume(now_), now_);
     }
     persist();
@@ -753,7 +819,13 @@ void DayController::skip() {
 
 void DayController::skipPhase() {
     if (session_) {
+        BlockProgress& prog = progress_.at(sessionBlock_);
+        if (!prog.phases.empty() && !prog.phases.back().end) {
+            prog.phases.back().skipped = true;
+            prog.phases.back().end = secondOfDay(now_);
+        }
         applyPomodoroEvents(session_->skip(now_), now_);
+        persist();
         evaluateNow();
     }
 }
@@ -804,8 +876,31 @@ void DayController::logPushups(int reps) {
     }
     const std::size_t index = session_ ? sessionBlock_ : current_.value_or(0);
     progress_.pushups.push_back(PushupSet{index, nowMinute(), reps});
+    for (auto it = progress_.at(index).prompts.rbegin(); it != progress_.at(index).prompts.rend(); ++it) {
+        if (it->answer == PromptAnswer::Pending) {
+            it->answer = PromptAnswer::Logged;
+            break;
+        }
+    }
     persist();
+    emit pushupsLogged(static_cast<int>(index), reps);
     emit changed();
+}
+
+void DayController::dismissPrompt() {
+    const std::size_t index = session_ ? sessionBlock_ : current_.value_or(0);
+    const auto found = progress_.blocks.find(index);
+    if (found == progress_.blocks.end()) {
+        return;
+    }
+    BlockProgress* prog = &found->second;
+    for (auto it = prog->prompts.rbegin(); it != prog->prompts.rend(); ++it) {
+        if (it->answer == PromptAnswer::Pending) {
+            it->answer = PromptAnswer::Skipped;
+            persist();
+            return;
+        }
+    }
 }
 
 bool DayController::snooze(int blockIndex) {
