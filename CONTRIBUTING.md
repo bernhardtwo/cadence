@@ -73,6 +73,11 @@ QML follows the same spirit:
 - Every changing time value (countdowns, remaining time, the summary clock) renders through
   `TimerText`, never a plain `Text`. Big Shoulders Display has no tabular figures, so the component
   lays each digit out in a fixed cell to keep the digits from shifting as they count.
+- Every user-facing string is marked for translation: `qsTr()` in QML, `tr()` in C++, `arg()`
+  placeholders instead of concatenation and `%n` for counts. User content (block, template,
+  activity and playlist names) is never translated, and strings QML compares against stay English
+  keys next to their translated labels. See `docs/i18n.md` for the lupdate and lrelease flow.
+- Quotes render through `QuoteBlock` only, on the surfaces listed in `docs/quotes.md`.
 
 ## Reporting issues
 

@@ -16,8 +16,12 @@ the phase and the block end becomes secondary text. Focus mode fills the screen 
 phase. The break overlay takes the accent and logs push-ups; block start and confirmation prompts
 sit on the dark canvas. The Templates screen edits the weekly template with validation from core
 and applies changes to today at once. Settings persist startup, alarm and push-up preferences and
-drive the runtime. Stats is a placeholder for the next milestone and music integration is not
-implemented yet.
+drive the runtime. Stats is a placeholder for the next milestone.
+
+The interface speaks English, Spanish and French, following the system language unless Settings
+says otherwise, and shows short passages from the Stoics and Epicurus on the running block, in
+focus mode and on the overlays, with the Latin or Greek original on request. See `docs/i18n.md`
+and `docs/quotes.md`.
 
 ### Running it
 
@@ -124,10 +128,12 @@ tests         Catch2 test suites for the core and platform libraries.
 
 ## Fonts
 
-The UI ships with two typefaces from Google Fonts, both under the SIL Open Font License 1.1:
+The UI ships with three typefaces from Google Fonts, all under the SIL Open Font License 1.1:
 
 - Big Shoulders Display by Patric King, `src/app/fonts/BigShouldersDisplay`
 - Archivo by Omnibus-Type, `src/app/fonts/Archivo`
+- Noto Serif Italic by the Noto Project, `src/app/fonts/NotoSerif`, subset to Latin and Greek for
+  the original line of the quotes
 
 Each directory contains the license text that applies to it.
 
