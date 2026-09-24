@@ -252,10 +252,7 @@ Seconds DayController::secondOfDay(Instant instant) const {
 }
 
 void DayController::closeOpenPhase(Seconds at) {
-    BlockProgress& prog = progress_.at(sessionBlock_);
-    if (!prog.phases.empty() && !prog.phases.back().end) {
-        prog.phases.back().end = at;
-    }
+    cadence::core::closeOpenPhase(progress_.at(sessionBlock_).phases, at);
 }
 
 void DayController::persist() {
@@ -809,6 +806,7 @@ void DayController::skip() {
     const std::size_t index = *current_;
     if (runningIndex() == index) {
         closeOpenPause(nowMinute());
+        cadence::core::closeOpenPhase(progress_.at(index).phases, secondOfDay(now_));
         session_.reset();
     }
     progress_.at(index).skipped = true;
@@ -854,8 +852,11 @@ void DayController::finish() {
         return;
     }
     const Minutes minute = nowMinute();
+    const std::size_t index = *runningIndex();
     closeOpenPause(minute);
-    progress_.at(*runningIndex()).actualEnd = minute;
+    // A block finished by hand ends its phase record now, so no record is ever left open.
+    cadence::core::closeOpenPhase(progress_.at(index).phases, secondOfDay(now_));
+    progress_.at(index).actualEnd = minute;
     session_.reset();
     persist();
     evaluateNow();
