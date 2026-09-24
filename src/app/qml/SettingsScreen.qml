@@ -25,10 +25,23 @@ Item {
     }
 
     Flickable {
+        id: page
+
         anchors.fill: parent
         clip: true
-        contentHeight: sections.height
+        contentHeight: sections.height + Theme.spacing40
         boundsBehavior: Flickable.StopAtBounds
+
+        // A thin indicator at the right edge shows there is more below the fold.
+        Rectangle {
+            x: page.width - width
+            y: page.contentY + page.visibleArea.yPosition * page.height
+            width: Theme.spacing4
+            height: Math.max(Theme.touchTarget, page.visibleArea.heightRatio * page.height)
+            radius: Theme.pill
+            color: Theme.line
+            visible: page.contentHeight > page.height
+        }
 
         Row {
             id: sections
