@@ -1,0 +1,13 @@
+{
+  "country": "MX",
+  "display_name": "Someone",
+  "explicit_content": { "filter_enabled": false, "filter_locked": false },
+  "external_urls": { "spotify": "https://open.spotify.com/user/user-1" },
+  "followers": { "href": null, "total": 3 },
+  "href": "https://api.spotify.com/v1/users/user-1",
+  "id": "user-1",
+  "images": [],
+  "product": "premium",
+  "type": "user",
+  "uri": "spotify:user:user-1"
+}

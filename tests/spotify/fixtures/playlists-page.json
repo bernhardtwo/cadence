@@ -1,0 +1,42 @@
+{
+  "href": "https://api.spotify.com/v1/users/user-1/playlists?offset=0&limit=2",
+  "limit": 2,
+  "next": "https://api.spotify.com/v1/users/user-1/playlists?offset=2&limit=2",
+  "offset": 0,
+  "previous": null,
+  "total": 30,
+  "items": [
+    {
+      "collaborative": false,
+      "description": "",
+      "external_urls": { "spotify": "https://open.spotify.com/playlist/playlist-1" },
+      "href": "https://api.spotify.com/v1/playlists/playlist-1",
+      "id": "playlist-1",
+      "images": [ { "height": null, "url": "https://i.example/playlist-1.jpg", "width": null } ],
+      "items": { "href": "https://api.spotify.com/v1/playlists/playlist-1/items" },
+      "name": "French with music",
+      "owner": { "display_name": "Someone", "id": "user-1", "type": "user", "uri": "spotify:user:user-1" },
+      "primary_color": null,
+      "public": false,
+      "snapshot_id": "snap-1",
+      "type": "playlist",
+      "uri": "spotify:playlist:playlist-1"
+    },
+    {
+      "collaborative": false,
+      "description": "",
+      "external_urls": { "spotify": "https://open.spotify.com/playlist/playlist-2" },
+      "href": "https://api.spotify.com/v1/playlists/playlist-2",
+      "id": "playlist-2",
+      "images": [ { "height": null, "url": "https://i.example/playlist-2.jpg", "width": null } ],
+      "items": { "href": "https://api.spotify.com/v1/playlists/playlist-2/items" },
+      "name": "Cosmic",
+      "owner": { "display_name": "Someone", "id": "user-1", "type": "user", "uri": "spotify:user:user-1" },
+      "primary_color": null,
+      "public": true,
+      "snapshot_id": "snap-2",
+      "type": "playlist",
+      "uri": "spotify:playlist:playlist-2"
+    }
+  ]
+}

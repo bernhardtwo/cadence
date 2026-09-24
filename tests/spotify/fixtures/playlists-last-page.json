@@ -1,0 +1,27 @@
+{
+  "href": "https://api.spotify.com/v1/users/user-1/playlists?offset=28&limit=2",
+  "limit": 2,
+  "next": null,
+  "offset": 28,
+  "previous": "https://api.spotify.com/v1/users/user-1/playlists?offset=26&limit=2",
+  "total": 30,
+  "items": [
+    null,
+    {
+      "collaborative": false,
+      "description": "",
+      "external_urls": { "spotify": "https://open.spotify.com/playlist/playlist-30" },
+      "href": "https://api.spotify.com/v1/playlists/playlist-30",
+      "id": "playlist-30",
+      "images": [],
+      "items": { "href": "https://api.spotify.com/v1/playlists/playlist-30/items" },
+      "name": "Last one",
+      "owner": { "display_name": "Someone", "id": "user-1", "type": "user", "uri": "spotify:user:user-1" },
+      "primary_color": null,
+      "public": false,
+      "snapshot_id": "snap-30",
+      "type": "playlist",
+      "uri": "spotify:playlist:playlist-30"
+    }
+  ]
+}

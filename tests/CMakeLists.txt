@@ -42,6 +42,19 @@ target_link_libraries(cadence_platform_tests PRIVATE
 
 catch_discover_tests(cadence_platform_tests)
 
+add_executable(cadence_spotify_tests
+    spotify/api_test.cpp
+    spotify/pkce_test.cpp)
+
+target_link_libraries(cadence_spotify_tests PRIVATE
+    cadence::spotify_core
+    Catch2::Catch2WithMain)
+
+target_compile_definitions(cadence_spotify_tests PRIVATE
+    CADENCE_SPOTIFY_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/spotify/fixtures")
+
+catch_discover_tests(cadence_spotify_tests)
+
 # QML component tests run on the offscreen platform so they need no display.
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick QuickTest)
 
