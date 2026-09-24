@@ -19,7 +19,10 @@ FocusScope {
     signal committed(string text)
 
     implicitWidth: Theme.fieldWidth
+    // A label longer than the field wraps and pushes the entry down; a one line label keeps the
+    // usual height. Fields in a Row should anchor their bottom so entries stay aligned.
     implicitHeight: Theme.touchTarget + Theme.spacing20
+                    + (caption.lineCount > 1 ? caption.contentHeight * (caption.lineCount - 1) / caption.lineCount : 0)
 
     onValueChanged: input.text = root.value
 
@@ -28,9 +31,12 @@ FocusScope {
 
         anchors {
             left: parent.left
+            right: parent.right
             top: parent.top
         }
         text: root.label
+        // Whole words only: a word wider than the field overflows rather than breaking.
+        wrapMode: Text.WordWrap
         color: root.error ? Theme.alert : Theme.textMuted
         font.family: Theme.bodyFamily
         font.weight: Theme.bodyWeightMedium

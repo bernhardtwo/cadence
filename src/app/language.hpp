@@ -23,14 +23,13 @@ class LanguageManager : public QObject {
     Q_PROPERTY(QStringList shortDayNames READ shortDayNames NOTIFY changed)
 
 public:
-    explicit LanguageManager(QObject* parent = nullptr);
+    // Takes the engine whose bindings are retranslated on a change. No default constructor on
+    // purpose: with one, QML would instantiate its own copy instead of calling create().
+    explicit LanguageManager(QQmlEngine& engine, QObject* parent = nullptr);
     ~LanguageManager() override;
 
     static LanguageManager* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine);
     static void setInstance(LanguageManager* instance);
-
-    // The engine whose bindings are retranslated on a change; set before the first apply.
-    void setEngine(QQmlEngine* engine);
 
     // Resolves the setting ("system", "en", "es", "fr") and switches to it. Does nothing when the
     // resolved language is already in use.
@@ -48,7 +47,7 @@ signals:
     void changed();
 
 private:
-    QQmlEngine* engine_ = nullptr;
+    QQmlEngine& engine_;
     QTranslator translator_;
     bool installed_ = false;
     QString current_;

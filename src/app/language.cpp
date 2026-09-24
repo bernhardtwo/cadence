@@ -25,7 +25,7 @@ std::vector<std::string> systemPreferences() {
 
 } // namespace
 
-LanguageManager::LanguageManager(QObject* parent) : QObject(parent) {}
+LanguageManager::LanguageManager(QQmlEngine& engine, QObject* parent) : QObject(parent), engine_(engine) {}
 
 LanguageManager::~LanguageManager() {
     if (s_instance == this) {
@@ -43,10 +43,6 @@ LanguageManager* LanguageManager::create(QQmlEngine* qmlEngine, QJSEngine* jsEng
 
 void LanguageManager::setInstance(LanguageManager* instance) {
     s_instance = instance;
-}
-
-void LanguageManager::setEngine(QQmlEngine* engine) {
-    engine_ = engine;
 }
 
 QString LanguageManager::systemLanguage() const {
@@ -103,8 +99,6 @@ void LanguageManager::apply(const QString& setting) {
     }
     QLocale::setDefault(QLocale(code));
     current_ = code;
-    if (engine_ != nullptr) {
-        engine_->retranslate();
-    }
+    engine_.retranslate();
     emit changed();
 }

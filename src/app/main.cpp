@@ -154,9 +154,6 @@ int main(int argc, char* argv[]) {
     Settings settings(apppaths::configDir() + u"/settings.json"_s, *autostart);
     Settings::setInstance(&settings);
 
-    LanguageManager language;
-    LanguageManager::setInstance(&language);
-
     EventLog eventLog(apppaths::dataDir() + u"/logs"_s);
     EventLog::setInstance(&eventLog);
     eventLog.write(u"start version %1"_s.arg(QString::fromUtf8(cadence::core::versionString())));
@@ -226,7 +223,8 @@ int main(int argc, char* argv[]) {
 
     QQmlApplicationEngine engine;
     // The translator must be in place before the first QML loads; later changes retranslate live.
-    language.setEngine(&engine);
+    LanguageManager language(engine);
+    LanguageManager::setInstance(&language);
     language.apply(settings.language());
     QObject::connect(&settings, &Settings::changed, &language,
                      [&language, &settings] { language.apply(settings.language()); });

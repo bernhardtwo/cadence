@@ -106,6 +106,7 @@ Item {
             }
 
             SignalField {
+                anchors.bottom: parent.bottom
                 label: qsTr("Day start")
                 value: TemplateEditor.dayStartText
                 placeholder: "08:30"
@@ -115,6 +116,7 @@ Item {
             }
 
             SignalField {
+                anchors.bottom: parent.bottom
                 label: qsTr("Cutoff")
                 value: TemplateEditor.dayCutoffText
                 placeholder: "23:00"
@@ -340,6 +342,7 @@ Item {
                 visible: root.hasBlock
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     visible: root.hasBlock && root.block.kind !== "Flexible"
                     label: root.hasBlock && root.block.kind === "Soft" ? qsTr("Earliest start") : qsTr("Start")
                     value: root.hasBlock ? root.block.startText : ""
@@ -349,6 +352,7 @@ Item {
                 }
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     label: qsTr("Duration (min)")
                     numeric: true
                     value: root.hasBlock && root.block.durationMinutes > 0 ? String(root.block.durationMinutes) : ""
@@ -370,6 +374,7 @@ Item {
                 visible: root.hasBlock && root.block.pomodoroEnabled
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     label: qsTr("Count")
                     numeric: true
                     value: root.hasBlock && root.block.pomodoroCount > 0 ? String(root.block.pomodoroCount) : ""
@@ -378,6 +383,7 @@ Item {
                 }
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     label: qsTr("Focus")
                     numeric: true
                     value: root.hasBlock ? String(root.block.focus) : ""
@@ -390,6 +396,7 @@ Item {
                 visible: root.hasBlock && root.block.pomodoroEnabled
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     label: qsTr("Short break")
                     numeric: true
                     value: root.hasBlock ? String(root.block.shortBreak) : ""
@@ -397,6 +404,7 @@ Item {
                 }
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     label: qsTr("Long break")
                     numeric: true
                     value: root.hasBlock ? String(root.block.longBreak) : ""
@@ -404,6 +412,7 @@ Item {
                 }
 
                 SignalField {
+                    anchors.bottom: parent.bottom
                     label: qsTr("Long every")
                     numeric: true
                     value: root.hasBlock ? String(root.block.longBreakEvery) : ""
