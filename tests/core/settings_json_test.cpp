@@ -35,3 +35,24 @@ TEST_CASE("settings parse errors name the offending key", "[settings]") {
     CHECK_THROWS_WITH(parseAppSettings(R"({"defaultReps": 0})"), ContainsSubstring("defaultReps"));
     CHECK_THROWS_WITH(parseAppSettings(R"({"startMinimized": "yes"})"), ContainsSubstring("startMinimized"));
 }
+
+TEST_CASE("spotify settings round trip and stay optional", "[settings]") {
+    AppSettings original;
+    // A fake client id: tests never carry a real one.
+    original.spotifyClientId = "fake-client-id-0000000000000000";
+    original.spotifyAutoplay = true;
+    original.activityPlaylists["work"] = PlaylistChoice{"spotify:playlist:playlist-1", "Deep focus"};
+    original.activityPlaylists["french"] = PlaylistChoice{"spotify:playlist:playlist-2", "French with music"};
+
+    const std::string text = serializeAppSettings(original);
+    CHECK_THAT(text, ContainsSubstring("\"clientId\": \"fake-client-id-0000000000000000\""));
+    CHECK_THAT(text, ContainsSubstring("\"autoplay\": true"));
+    CHECK(parseAppSettings(text) == original);
+
+    // A file without the section keeps the defaults; a choice without a uri is dropped.
+    CHECK(parseAppSettings(R"({"version": 1})").activityPlaylists.empty());
+    const AppSettings partial = parseAppSettings(R"({"spotify": {"playlists": {"work": {"name": "x"}}}})");
+    CHECK(partial.activityPlaylists.empty());
+    CHECK_THROWS_WITH(parseAppSettings(R"({"spotify": {"clientId": 5}})"),
+                      ContainsSubstring("spotify.clientId"));
+}

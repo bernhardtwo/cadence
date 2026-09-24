@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -16,12 +17,26 @@ enum class SoundMode {
     Silent,
 };
 
+// A playlist the user picked for an activity; the name is only for display.
+struct PlaylistChoice {
+    std::string uri;
+    std::string name;
+
+    friend bool operator==(const PlaylistChoice&, const PlaylistChoice&) = default;
+};
+
 struct AppSettings {
     bool startMinimized = false;
     SoundMode sound = SoundMode::Default;
     int maxSnoozes = 2;
     bool warnDayNoLongerFits = true;
     int defaultReps = 10;
+    // The user's own Spotify app. It is an identifier, not a secret; tokens never come here.
+    std::string spotifyClientId;
+    // Start the activity's playlist when its block starts.
+    bool spotifyAutoplay = false;
+    // Keyed by activity id.
+    std::map<std::string, PlaylistChoice> activityPlaylists;
 
     friend bool operator==(const AppSettings&, const AppSettings&) = default;
 };

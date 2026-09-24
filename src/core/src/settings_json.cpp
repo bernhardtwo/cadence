@@ -74,6 +74,18 @@ std::string serializeAppSettings(const AppSettings& settings) {
     root["maxSnoozes"] = settings.maxSnoozes;
     root["warnDayNoLongerFits"] = settings.warnDayNoLongerFits;
     root["defaultReps"] = settings.defaultReps;
+    Json spotify;
+    spotify["clientId"] = settings.spotifyClientId;
+    spotify["autoplay"] = settings.spotifyAutoplay;
+    Json playlists = Json::object();
+    for (const auto& [activity, choice] : settings.activityPlaylists) {
+        Json item;
+        item["uri"] = choice.uri;
+        item["name"] = choice.name;
+        playlists[activity] = std::move(item);
+    }
+    spotify["playlists"] = std::move(playlists);
+    root["spotify"] = std::move(spotify);
     return root.dump(2) + "\n";
 }
 
@@ -103,6 +115,38 @@ AppSettings parseAppSettings(std::string_view json) {
     settings.maxSnoozes = readInt(root, "maxSnoozes", settings.maxSnoozes, 0, 20);
     settings.warnDayNoLongerFits = readBool(root, "warnDayNoLongerFits", settings.warnDayNoLongerFits);
     settings.defaultReps = readInt(root, "defaultReps", settings.defaultReps, 1, 500);
+    if (const auto spotify = root.find("spotify"); spotify != root.end() && !spotify->is_null()) {
+        if (!spotify->is_object()) {
+            fail("spotify", "expected an object");
+        }
+        if (const auto id = spotify->find("clientId"); id != spotify->end() && !id->is_null()) {
+            if (!id->is_string()) {
+                fail("spotify.clientId", "expected a string");
+            }
+            settings.spotifyClientId = id->get<std::string>();
+        }
+        settings.spotifyAutoplay = readBool(*spotify, "autoplay", settings.spotifyAutoplay);
+        if (const auto lists = spotify->find("playlists"); lists != spotify->end() && !lists->is_null()) {
+            if (!lists->is_object()) {
+                fail("spotify.playlists", "expected an object keyed by activity");
+            }
+            for (const auto& [activity, value] : lists->items()) {
+                if (!value.is_object()) {
+                    fail("spotify.playlists." + activity, "expected an object");
+                }
+                PlaylistChoice choice;
+                if (const auto uri = value.find("uri"); uri != value.end() && uri->is_string()) {
+                    choice.uri = uri->get<std::string>();
+                }
+                if (const auto name = value.find("name"); name != value.end() && name->is_string()) {
+                    choice.name = name->get<std::string>();
+                }
+                if (!choice.uri.empty()) {
+                    settings.activityPlaylists[activity] = choice;
+                }
+            }
+        }
+    }
     return settings;
 }
 
