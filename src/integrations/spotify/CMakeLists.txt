@@ -24,9 +24,11 @@ endif()
 # Qt part: the PKCE flow, the credential store and the Web API client.
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Network NetworkAuth)
 
+# qtkeychain declares option(BUILD_SHARED_LIBS ON), which would leak into the cache and turn every
+# later dependency (Catch2 included) into a DLL. Everything fetched here is linked statically.
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Fetched dependencies are linked statically" FORCE)
 set(BUILD_TEST_APPLICATION OFF CACHE BOOL "" FORCE)
 set(BUILD_TRANSLATIONS OFF CACHE BOOL "" FORCE)
-set(QTKEYCHAIN_STATIC ON CACHE BOOL "" FORCE)
 set(BUILD_WITH_QT6 ON CACHE BOOL "" FORCE)
 FetchContent_Declare(qtkeychain
     GIT_REPOSITORY https://github.com/frankosterfeld/qtkeychain.git
@@ -40,6 +42,7 @@ add_library(cadence_spotify STATIC
     src/auth.cpp
     src/client.cpp)
 add_library(cadence::spotify ALIAS cadence_spotify)
+set_target_properties(cadence_spotify PROPERTIES AUTOMOC ON)
 
 target_include_directories(cadence_spotify PUBLIC include)
 target_include_directories(cadence_spotify SYSTEM PRIVATE "${qtkeychain_SOURCE_DIR}" "${qtkeychain_BINARY_DIR}")
