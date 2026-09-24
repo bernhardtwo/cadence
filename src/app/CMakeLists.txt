@@ -1,4 +1,4 @@
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets Network Qml Quick QuickControls2 Svg Multimedia)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets Network NetworkAuth Qml Quick QuickControls2 Svg Multimedia)
 
 qt_standard_project_setup(REQUIRES 6.5)
 set(QT_QML_GENERATE_QMLLS_INI ON)
@@ -22,6 +22,8 @@ qt_add_executable(cadence
     settings.hpp
     singleinstance.cpp
     singleinstance.hpp
+    spotifyplayer.cpp
+    spotifyplayer.hpp
     systemclock.cpp
     systemclock.hpp
     templateeditor.cpp
@@ -43,6 +45,7 @@ set(CADENCE_QML_FILES
     qml/Main.qml
     qml/NavPill.qml
     qml/Overlay.qml
+    qml/PlaylistPicker.qml
     qml/PomodoroGrid.qml
     qml/SettingsScreen.qml
     qml/SignalButton.qml
@@ -95,6 +98,7 @@ qt_add_resources(cadence "cadence_icons"
 target_link_libraries(cadence PRIVATE
     cadence::core
     cadence::platform
+    cadence::spotify
     cadence_themeplugin
     Qt6::Core
     Qt6::Gui

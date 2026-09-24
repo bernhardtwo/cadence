@@ -160,6 +160,48 @@ void Settings::setDefaultReps(int reps) {
     save();
 }
 
+void Settings::setSpotifyClientId(const QString& clientId) {
+    const std::string trimmed = clientId.trimmed().toStdString();
+    if (values_.spotifyClientId == trimmed) {
+        return;
+    }
+    values_.spotifyClientId = trimmed;
+    save();
+}
+
+void Settings::setSpotifyAutoplay(bool autoplay) {
+    if (values_.spotifyAutoplay == autoplay) {
+        return;
+    }
+    values_.spotifyAutoplay = autoplay;
+    save();
+}
+
+QString Settings::playlistUriFor(const QString& activityId) const {
+    const auto it = values_.activityPlaylists.find(activityId.toStdString());
+    return it == values_.activityPlaylists.end() ? QString() : QString::fromStdString(it->second.uri);
+}
+
+QString Settings::playlistNameFor(const QString& activityId) const {
+    const auto it = values_.activityPlaylists.find(activityId.toStdString());
+    return it == values_.activityPlaylists.end() ? QString() : QString::fromStdString(it->second.name);
+}
+
+void Settings::setPlaylistFor(const QString& activityId, const QString& uri, const QString& name) {
+    if (activityId.isEmpty() || uri.isEmpty()) {
+        return;
+    }
+    values_.activityPlaylists[activityId.toStdString()] =
+        PlaylistChoice{uri.toStdString(), name.toStdString()};
+    save();
+}
+
+void Settings::clearPlaylistFor(const QString& activityId) {
+    if (values_.activityPlaylists.erase(activityId.toStdString()) > 0) {
+        save();
+    }
+}
+
 void Settings::refresh() {
     emit changed();
 }

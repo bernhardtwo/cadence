@@ -475,6 +475,25 @@ QString DayController::currentState() const {
     return current_ ? stateName(plan_.at(*current_).state) : QString();
 }
 
+QString DayController::currentActivityId() const {
+    const BlockTemplate* tpl = current_ ? block(*current_) : nullptr;
+    return tpl ? QString::fromStdString(tpl->activityId) : QString();
+}
+
+QVariantList DayController::activities() const {
+    QVariantList list;
+    if (!document_) {
+        return list;
+    }
+    for (const Activity& activity : document_->activities) {
+        QVariantMap row;
+        row[u"id"_s] = QString::fromStdString(activity.id);
+        row[u"name"_s] = QString::fromStdString(activity.name);
+        list.push_back(row);
+    }
+    return list;
+}
+
 bool DayController::running() const {
     return runningIndex().has_value();
 }
@@ -762,6 +781,9 @@ void DayController::start() {
     }
     persist();
     evaluateNow();
+    if (const BlockTemplate* tpl = block(index)) {
+        emit blockStarted(static_cast<int>(index), QString::fromStdString(tpl->activityId));
+    }
 }
 
 void DayController::pause() {

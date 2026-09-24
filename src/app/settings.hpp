@@ -21,6 +21,8 @@ class Settings : public QObject {
     Q_PROPERTY(int maxSnoozes READ maxSnoozes WRITE setMaxSnoozes NOTIFY changed)
     Q_PROPERTY(bool warnDayNoLongerFits READ warnDayNoLongerFits WRITE setWarnDayNoLongerFits NOTIFY changed)
     Q_PROPERTY(int defaultReps READ defaultReps WRITE setDefaultReps NOTIFY changed)
+    Q_PROPERTY(QString spotifyClientId READ spotifyClientId WRITE setSpotifyClientId NOTIFY changed)
+    Q_PROPERTY(bool spotifyAutoplay READ spotifyAutoplay WRITE setSpotifyAutoplay NOTIFY changed)
     Q_PROPERTY(QString path READ path CONSTANT)
     Q_PROPERTY(QString error READ error NOTIFY changed)
 
@@ -50,6 +52,15 @@ public:
     void setMaxSnoozes(int limit);
     void setWarnDayNoLongerFits(bool warn);
     void setDefaultReps(int reps);
+
+    QString spotifyClientId() const { return QString::fromStdString(values_.spotifyClientId); }
+    void setSpotifyClientId(const QString& clientId);
+    bool spotifyAutoplay() const { return values_.spotifyAutoplay; }
+    void setSpotifyAutoplay(bool autoplay);
+    Q_INVOKABLE QString playlistUriFor(const QString& activityId) const;
+    Q_INVOKABLE QString playlistNameFor(const QString& activityId) const;
+    Q_INVOKABLE void setPlaylistFor(const QString& activityId, const QString& uri, const QString& name);
+    Q_INVOKABLE void clearPlaylistFor(const QString& activityId);
 
     // For changes made elsewhere, such as the tray toggling launch at login.
     Q_INVOKABLE void refresh();

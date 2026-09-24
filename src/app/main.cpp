@@ -5,6 +5,7 @@
 #include "fileprogressstore.hpp"
 #include "settings.hpp"
 #include "singleinstance.hpp"
+#include "spotifyplayer.hpp"
 #include "systemclock.hpp"
 #include "templateeditor.hpp"
 #include "trayicon.hpp"
@@ -12,6 +13,8 @@
 
 #include <cadence/core/version.hpp>
 #include <cadence/platform/autostart.hpp>
+#include <cadence/spotify/auth.hpp>
+#include <cadence/spotify/client.hpp>
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -194,6 +197,17 @@ int main(int argc, char* argv[]) {
     };
     applySettings();
     QObject::connect(&settings, &Settings::changed, &controller, applySettings);
+
+    // Spotify: the auth and client live for the whole run; the player model faces QML.
+    cadence::spotify::SpotifyAuth spotifyAuth;
+    cadence::spotify::SpotifyClient spotifyClient(spotifyAuth);
+    SpotifyPlayer spotify(settings, spotifyAuth, spotifyClient);
+    SpotifyPlayer::setInstance(&spotify);
+    QObject::connect(&spotifyAuth, &cadence::spotify::SpotifyAuth::logMessage, &eventLog, &EventLog::write);
+    QObject::connect(&spotifyClient, &cadence::spotify::SpotifyClient::logMessage, &eventLog, &EventLog::write);
+    QObject::connect(&spotify, &SpotifyPlayer::logMessage, &eventLog, &EventLog::write);
+    QObject::connect(&controller, &DayController::blockStarted, &spotify, &SpotifyPlayer::onBlockStarted);
+    spotify.restore();
 
     WakeWatcher wakeWatcher;
     QObject::connect(&wakeWatcher, &WakeWatcher::wakeDetected, &controller, &DayController::evaluateNow);

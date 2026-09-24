@@ -34,6 +34,8 @@ class DayController : public QObject {
     Q_PROPERTY(QString currentName READ currentName NOTIFY changed)
     Q_PROPERTY(QString currentKind READ currentKind NOTIFY changed)
     Q_PROPERTY(QString currentState READ currentState NOTIFY changed)
+    Q_PROPERTY(QString currentActivityId READ currentActivityId NOTIFY changed)
+    Q_PROPERTY(QVariantList activities READ activities NOTIFY changed)
     Q_PROPERTY(bool running READ running NOTIFY changed)
     Q_PROPERTY(bool paused READ paused NOTIFY changed)
     Q_PROPERTY(int remainingSeconds READ remainingSeconds NOTIFY changed)
@@ -107,6 +109,9 @@ public:
     QString currentName() const;
     QString currentKind() const;
     QString currentState() const;
+    QString currentActivityId() const;
+    // Every activity of the template as {id, name}, for the settings card.
+    QVariantList activities() const;
     bool running() const;
     bool paused() const;
     int remainingSeconds() const;
@@ -166,6 +171,8 @@ signals:
     void alarmRaised(int kind, int blockIndex, const QString& title, const QString& message);
     void pushupPrompt(int blockIndex, int setIndex);
     void pushupsLogged(int blockIndex, int reps);
+    // The user started a block; carries the activity id for the music autoplay.
+    void blockStarted(int blockIndex, const QString& activityId);
     // A restart rebuilt a running pomodoro session from the progress file.
     void sessionRestored(int blockIndex, const QString& phase, int remainingSeconds);
 
