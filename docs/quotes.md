@@ -26,6 +26,8 @@ Latin originals; do not paste a modern copyrighted translation. In French, put a
 1. Append an entry to `quotes` with a new id, such as `seneca-ep-49`, and the fields above. Add
    the author or work to the maps first if it is new.
 2. Check the original against a public critical text (Perseus, The Latin Library, Wikisource).
+   Write Greek elisions with the koronis (U+1FBD, `᾽`), the one apostrophe form used in the
+   file, and end a cut original with ` …` when the rendering continues past it.
 3. Run the core tests: `tests/core/quotes_test.cpp` loads the shipped file and checks every field,
    the unique ids and the contexts.
 4. Start a debug build against a test session and look at the surface the context belongs to. A

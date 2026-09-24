@@ -23,6 +23,18 @@ and therefore safe in release.
 Motivation: milestone 4 could not verify the release binary in isolation because release builds
 ignore the test variables and share the single instance key with the deployed copy.
 
+## Responsive layout below the minimum window size
+
+The main window refuses to shrink below 1280 by 600. The layouts are fixed: the Templates header
+row (day pills, copy and free day buttons, day start and cutoff fields) fills the whole left
+column in French at 1280, the Settings screen puts its two columns side by side and the Today
+side column needs about 600 for three rows of pomodoros, the actions and the margins. Below that
+size fields run under the block panel and buttons fall off the bottom.
+
+Make the screens adapt instead: wrap the Templates header row, stack the Settings columns and
+let the Today side column scroll or the pomodoro grid shrink, then lower the minimum to something
+a laptop can split screen with.
+
 ## Clean shutdown from outside
 
 The single instance socket only understands `show`. Add a `quit` command (and a `--quit` flag that
