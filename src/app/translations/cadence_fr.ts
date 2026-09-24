@@ -475,6 +475,34 @@
         <translation>Répétitions par défaut</translation>
     </message>
     <message>
+        <source>Language</source>
+        <translation>Langue</translation>
+    </message>
+    <message>
+        <source>Shown in</source>
+        <translation>Afficher en</translation>
+    </message>
+    <message>
+        <source>System language (%1)</source>
+        <translation>Langue du système (%1)</translation>
+    </message>
+    <message>
+        <source>Quotes</source>
+        <translation>Citations</translation>
+    </message>
+    <message>
+        <source>Show philosophers&apos; quotes</source>
+        <translation>Afficher des citations de philosophes</translation>
+    </message>
+    <message>
+        <source>Also show the original text</source>
+        <translation>Afficher aussi le texte original</translation>
+    </message>
+    <message>
+        <source>Latin or Greek, as a small line under the translation.</source>
+        <translation>Latin ou grec, en petite ligne sous la traduction.</translation>
+    </message>
+    <message>
         <source>Music</source>
         <translation>Musique</translation>
     </message>
