@@ -25,15 +25,22 @@ ignore the test variables and share the single instance key with the deployed co
 
 ## Responsive layout below the minimum window size
 
-The main window refuses to shrink below 1280 by 600. The layouts are fixed: the Templates header
-row (day pills, copy and free day buttons, day start and cutoff fields) fills the whole left
-column in French at 1280, the Settings screen puts its two columns side by side and the Today
-side column needs about 600 for three rows of pomodoros, the actions and the margins. Below that
-size fields run under the block panel and buttons fall off the bottom.
+The main window refuses to shrink below 1024 by 520, which fits a 1366 by 768 screen at 125
+percent scaling with the taskbar showing (1093 by 614 logical, about 566 left for the window and
+39 of that for its frame). What the screens do at that size:
 
-Make the screens adapt instead: wrap the Templates header row, stack the Settings columns and
-let the Today side column scroll or the pomodoro grid shrink, then lower the minimum to something
-a laptop can split screen with.
+- Templates: the day fields wrap under the two buttons, the day pills narrow to 44 and wrap
+  below that, and the block list scrolls with one and a half rows in view. The width floor is
+  the two French buttons, 484 wide, next to the 420 block panel and the margins.
+- Settings: the music card stacks under the left column below 1080 and the page scrolls.
+- Today: the side column scrolls, the block timer is capped at 60 percent of the bar and the
+  block name shrinks to 56 before it elides.
+- Stats and focus mode have nothing to wrap.
+
+Going lower needs a redesign: the Templates panel would have to collapse or float, and the
+top bar would have to elide the summary, which is a `TimerText` with fixed digit cells. The
+summary already touches the navigation pills at 1024 in French with a block name of about
+thirty characters.
 
 ## Clean shutdown from outside
 
