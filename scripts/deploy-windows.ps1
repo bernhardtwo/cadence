@@ -31,6 +31,11 @@ Do not run ctest on the release preset before deploying.
 
 .PARAMETER LaunchTimeoutSec
 How long to wait for exactly one process from the target after the relaunch.
+
+.PARAMETER DryRun
+Run every read-only check (the tests unless -SkipTests, the hashes, the process lookup, the Run
+key, the backup path and the windeployqt command line) and print each mutating step instead of
+executing it. Nothing is stopped, moved, copied or started.
 #>
 [CmdletBinding()]
 param(
@@ -40,7 +45,8 @@ param(
     [string]$ConfigDir = (Join-Path $env:LOCALAPPDATA "Cadence\Cadence"),
     [string]$DataDir = (Join-Path $env:APPDATA "Cadence\Cadence"),
     [switch]$SkipTests,
-    [int]$LaunchTimeoutSec = 20
+    [int]$LaunchTimeoutSec = 20,
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,9 +59,15 @@ $progressFile = Join-Path $DataDir "progress\$today.json"
 $settingsFile = Join-Path $ConfigDir "settings.json"
 $logFile = Join-Path $DataDir "logs\$today.log"
 $previous = "$Target.previous"
+$deployedExe = Join-Path $Target "cadence.exe"
 $failures = @()
 
 function Stamp { (Get-Date).ToString("HH:mm:ss") }
+
+# Every step that changes something goes through here, so a dry run prints it and stops there.
+function Act($description, [scriptblock]$action) {
+    if ($DryRun) { "would $description" } else { & $action }
+}
 
 function Hash($path) {
     if (Test-Path $path) { (Get-FileHash $path -Algorithm SHA256).Hash } else { "(absent)" }
@@ -103,6 +115,7 @@ foreach ($folder in @($ConfigDir, $DataDir)) {
 "source  $source"
 "target  $Target"
 "backup  $previous"
+if ($DryRun) { "mode    dry run: nothing is stopped, moved, copied or started" }
 
 if ($SkipTests) {
     "tests   skipped (-SkipTests)"
@@ -129,48 +142,65 @@ $logLinesBefore = if (Test-Path $logFile) { @(Get-Content $logFile).Count } else
 # There is no quit command on the single instance socket yet (docs/follow-ups.md), so the process
 # is terminated. Progress is persisted on every action, so nothing is lost.
 foreach ($p in TargetProcesses) {
-    "stopping pid $($p.Id) started $($p.StartTime)"
-    Stop-Process -Id $p.Id -Force
+    Act "stop pid $($p.Id) started $($p.StartTime)" {
+        "stopping pid $($p.Id) started $($p.StartTime)"
+        Stop-Process -Id $p.Id -Force
+    }
 }
-$deadline = (Get-Date).AddSeconds(10)
-while ((TargetProcesses).Count -gt 0 -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
-if ((TargetProcesses).Count -gt 0) { throw "the deployed copy is still running" }
+if (-not $DryRun) {
+    $deadline = (Get-Date).AddSeconds(10)
+    while ((TargetProcesses).Count -gt 0 -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
+    if ((TargetProcesses).Count -gt 0) { throw "the deployed copy is still running" }
+}
 
 "== $(Stamp) back up and deploy =="
 if (Test-Path $Target) {
     if (Test-Path $previous) {
-        "removing the older backup $previous"
-        Remove-Item -Recurse -Force $previous
+        Act "remove the older backup $previous" {
+            "removing the older backup $previous"
+            Remove-Item -Recurse -Force $previous
+        }
     }
-    Move-Item $Target $previous
-    "moved $Target to $previous"
+    Act "move $Target to $previous" {
+        Move-Item $Target $previous
+        "moved $Target to $previous"
+    }
 }
-New-Item -ItemType Directory -Path $Target | Out-Null
-Copy-Item $source (Join-Path $Target "cadence.exe")
-if ((Get-FileHash $source -Algorithm SHA256).Hash -ne (Hash (Join-Path $Target "cadence.exe"))) {
+Act "create $Target" { New-Item -ItemType Directory -Path $Target | Out-Null }
+Act "copy $source to $deployedExe" { Copy-Item $source $deployedExe }
+$build = Get-Item $source
+"build   cadence.exe $($build.Length) bytes, built $($build.LastWriteTime), sha256 $(Hash $source)"
+if (-not $DryRun -and (Hash $source) -ne (Hash $deployedExe)) {
     throw "copied executable differs from the build"
 }
 # Same flags as the post-build step in src/app/CMakeLists.txt. Translations, quotes and fonts are
 # compiled into the executable, so windeployqt brings everything else.
-& $windeployqt --qmldir (Join-Path $repo "src\app\qml") --no-translations --no-system-d3d-compiler --no-opengl-sw (Join-Path $Target "cadence.exe") | Select-Object -Last 1
-if ($LASTEXITCODE -ne 0) { throw "windeployqt failed (exit code $LASTEXITCODE)" }
-$exe = Get-Item (Join-Path $Target "cadence.exe")
-"deployed cadence.exe $($exe.Length) bytes, built $($exe.LastWriteTime)"
+$deployArgs = @("--qmldir", (Join-Path $repo "src\app\qml"), "--no-translations", "--no-system-d3d-compiler", "--no-opengl-sw", $deployedExe)
+Act "run: `"$windeployqt`" $($deployArgs -join ' ')" {
+    & $windeployqt @deployArgs | Select-Object -Last 1
+    if ($LASTEXITCODE -ne 0) { throw "windeployqt failed (exit code $LASTEXITCODE)" }
+    $exe = Get-Item $deployedExe
+    "deployed cadence.exe $($exe.Length) bytes, built $($exe.LastWriteTime)"
+}
 
 "== $(Stamp) relaunch =="
-Start-Process -FilePath (Join-Path $Target "cadence.exe") -ArgumentList "--minimized" -WorkingDirectory $Target | Out-Null
+Act "start: `"$deployedExe`" --minimized (working directory $Target)" {
+    Start-Process -FilePath $deployedExe -ArgumentList "--minimized" -WorkingDirectory $Target | Out-Null
+}
 # One process must appear and stay alone: a second one would hand over to the first and exit.
 $deadline = (Get-Date).AddSeconds($LaunchTimeoutSec)
 $stable = 0
-$count = 0
-while ((Get-Date) -lt $deadline) {
+$count = (TargetProcesses).Count
+while (-not $DryRun -and (Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 1
     $count = (TargetProcesses).Count
     if ($count -eq 1) { $stable += 1 } else { $stable = 0 }
     if ($stable -ge 3) { break }
 }
 foreach ($p in TargetProcesses) { "cadence pid $($p.Id) path $($p.Path) started $($p.StartTime)" }
-if ($stable -ge 3) {
+if ($DryRun) {
+    "processes from the target now: $count (the relaunch check needs a real run)"
+} elseif ($stable -ge 3) {
     "processes from the target: 1 (stable for 3 s)"
 } else {
     $failures += "expected exactly one process from the target after $LaunchTimeoutSec s, saw $count"
@@ -189,7 +219,7 @@ if ($settingsAfter -ne $settingsBefore) {
     "settings keys removed: $(($keysBefore | Where-Object { $keysAfter -notcontains $_ }) -join ', ')"
 }
 $runKey = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -ErrorAction SilentlyContinue).Cadence
-$expectedRun = "`"$(Join-Path $Target 'cadence.exe')`" --minimized"
+$expectedRun = "`"$deployedExe`" --minimized"
 "run key: $runKey"
 if ($runKey -ne $expectedRun) { $failures += "Run key 'Cadence' is not $expectedRun" }
 
@@ -197,7 +227,7 @@ if ($runKey -ne $expectedRun) { $failures += "Run key 'Cadence' is not $expected
 if (Test-Path $logFile) {
     $lines = @(Get-Content $logFile | Select-Object -Skip $logLinesBefore)
     if ($lines.Count -eq 0) { "(none yet)" } else { $lines }
-    if (-not ($lines -match "^\S+\s+start version ")) { $failures += "no 'start version' line in today's log after the relaunch" }
+    if (-not $DryRun -and -not ($lines -match "^\S+\s+start version ")) { $failures += "no 'start version' line in today's log after the relaunch" }
 } else {
     $failures += "no log file for today: $logFile"
 }
@@ -208,4 +238,4 @@ if ($failures.Count -gt 0) {
     $failures | ForEach-Object { " - $_" }
     exit 1
 }
-"== $(Stamp) done =="
+"== $(Stamp) $(if ($DryRun) { 'dry run done: nothing was changed' } else { 'done' }) =="

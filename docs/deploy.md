@@ -17,6 +17,10 @@ outside" entry in `follow-ups.md`.
 Deploy only a commit whose release build passed its tests. The script runs them itself unless
 told not to.
 
+A rehearsal costs nothing: `-DryRun` runs the tests, the hashes, the process lookup and the Run
+key check, and prints the stop, backup, copy, windeployqt and relaunch steps without executing
+them. Run it before the first deploy of the day to see exactly what the real run will do.
+
 ## Running it
 
 From a shell where `QT_ROOT` points at the Qt kit (the folder holding `bin\windeployqt.exe`) and
@@ -40,6 +44,7 @@ under `%LOCALAPPDATA%` and `%APPDATA%`). Every path is a parameter:
 | `-DataDir` | `%APPDATA%\Cadence\Cadence` | Where `progress\` and `logs\` live |
 | `-SkipTests` | off | Do not run `ctest` on the preset first |
 | `-LaunchTimeoutSec` | 20 | Wait for the relaunched process |
+| `-DryRun` | off | Run the read-only checks and print every mutating step instead of executing it |
 
 The script never writes under the config or data folder and refuses a target that overlaps
 either of them.
