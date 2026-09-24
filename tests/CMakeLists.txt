@@ -73,3 +73,8 @@ add_test(NAME cadence_qml_tests COMMAND cadence_qml_tests -import "${CMAKE_BINAR
 set_tests_properties(cadence_qml_tests PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
+# Every string must be translated and no stale entry may linger in the .ts files.
+add_test(NAME cadence_translations_check
+    COMMAND "${CMAKE_COMMAND}" "-DTS_DIR=${PROJECT_SOURCE_DIR}/src/app/translations"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/check_translations.cmake")

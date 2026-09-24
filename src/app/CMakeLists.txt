@@ -1,6 +1,7 @@
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets Network NetworkAuth Qml Quick QuickControls2 Svg Multimedia)
+find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Widgets Network NetworkAuth Qml Quick QuickControls2 Svg Multimedia LinguistTools)
 
-qt_standard_project_setup(REQUIRES 6.5)
+# English is the source language; the plural forms it needs live in translations/cadence_en.ts.
+qt_standard_project_setup(REQUIRES 6.7 I18N_SOURCE_LANGUAGE en I18N_TRANSLATED_LANGUAGES es fr)
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
 qt_add_executable(cadence
@@ -17,6 +18,8 @@ qt_add_executable(cadence
     eventlog.hpp
     fileprogressstore.cpp
     fileprogressstore.hpp
+    language.cpp
+    language.hpp
     progressstore.hpp
     settings.cpp
     settings.hpp
@@ -71,6 +74,15 @@ qt_add_qml_module(cadence
     IMPORT_PATH "${CMAKE_BINARY_DIR}/qml")
 
 add_subdirectory(qml/theme)
+
+# The .ts files are committed; `cmake --build --target update_translations` refreshes them from
+# the sources and the build compiles them into :/i18n/cadence_<lang>.qm.
+qt_add_translations(cadence
+    TS_FILE_BASE cadence
+    TS_FILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/translations"
+    RESOURCE_PREFIX "/i18n"
+    SOURCE_TARGETS cadence
+    LUPDATE_OPTIONS -no-obsolete -locations none)
 
 qt_add_resources(cadence "cadence_fonts"
     PREFIX "/fonts"

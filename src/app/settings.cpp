@@ -1,5 +1,7 @@
 #include "settings.hpp"
 
+#include <cadence/core/language.hpp>
+
 #include <QByteArray>
 #include <QDir>
 #include <QFile>
@@ -157,6 +159,20 @@ void Settings::setDefaultReps(int reps) {
         return;
     }
     values_.defaultReps = clamped;
+    save();
+}
+
+void Settings::setLanguage(const QString& language) {
+    const std::string code = language.toStdString();
+    const bool shipped =
+        std::find(shippedLanguages.begin(), shippedLanguages.end(), code) != shippedLanguages.end();
+    if (!shipped && code != "system") {
+        return;
+    }
+    if (values_.language == code) {
+        return;
+    }
+    values_.language = code;
     save();
 }
 
