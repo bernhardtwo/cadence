@@ -6,6 +6,7 @@
 #include <cadence/core/clock.hpp>
 #include <cadence/core/planner.hpp>
 #include <cadence/core/pomodoro.hpp>
+#include <cadence/core/summary.hpp>
 #include <cadence/core/template_json.hpp>
 
 #include <QObject>
@@ -50,8 +51,9 @@ class DayController : public QObject {
     Q_PROPERTY(int currentDurationMinutes READ currentDurationMinutes NOTIFY changed)
     Q_PROPERTY(bool pomodoroOnBreak READ pomodoroOnBreak NOTIFY changed)
     Q_PROPERTY(QString nextBreakText READ nextBreakText NOTIFY changed)
+    Q_PROPERTY(QString summaryName READ summaryName NOTIFY changed)
     Q_PROPERTY(int doneMinutes READ doneMinutes NOTIFY changed)
-    Q_PROPERTY(int plannedMinutes READ plannedMinutes NOTIFY changed)
+    Q_PROPERTY(int targetMinutes READ targetMinutes NOTIFY changed)
     Q_PROPERTY(int pushupsToday READ pushupsToday NOTIFY changed)
     Q_PROPERTY(QString summaryText READ summaryText NOTIFY changed)
     Q_PROPERTY(QVariantList plan READ planList NOTIFY changed)
@@ -122,8 +124,9 @@ public:
     int currentDurationMinutes() const;
     bool pomodoroOnBreak() const;
     QString nextBreakText() const;
+    QString summaryName() const;
     int doneMinutes() const;
-    int plannedMinutes() const;
+    int targetMinutes() const;
     int pushupsToday() const;
     QString summaryText() const;
     QVariantList planList() const;
@@ -178,6 +181,7 @@ private:
     static QString formatDuration(int seconds);
     static QString formatClock(int minutes);
     QString blockDetail(std::size_t index, const cadence::core::PlannedBlock& planned) const;
+    cadence::core::ActivitySummary summary() const;
 
     std::unique_ptr<cadence::core::IClock> clock_;
     std::unique_ptr<ProgressStore> store_;

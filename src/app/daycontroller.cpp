@@ -558,32 +558,35 @@ QString DayController::nextBreakText() const {
     return text;
 }
 
-int DayController::doneMinutes() const {
-    Minutes total = plan_.completedMinutes();
-    const Minutes now = nowMinute();
-    for (const PlannedBlock& planned : plan_.blocks) {
-        if (planned.state != BlockState::Active) {
-            continue;
-        }
-        Minutes elapsed = std::clamp(now, planned.start, planned.end) - planned.start;
-        if (const BlockProgress* prog = progress_.find(planned.templateIndex)) {
-            for (const PauseInterval& pause : prog->pauses) {
-                elapsed -= std::max(Minutes{0}, pause.end.value_or(now) - pause.start);
-            }
-        }
-        total += std::max(Minutes{0}, elapsed);
+// The day summary follows one activity, work when the template has it, and measures it against
+// its template length so an early finish never shrinks the target.
+ActivitySummary DayController::summary() const {
+    if (!day_) {
+        return {};
     }
-    return static_cast<int>(total.count());
+    const std::optional<ActivityId> activity =
+        summaryActivity(*day_, document_ ? document_->activities : std::vector<Activity>{});
+    if (!activity) {
+        return {};
+    }
+    return summarizeActivity(*day_, plan_, progress_, *activity, nowMinute());
 }
 
-int DayController::plannedMinutes() const {
-    Minutes total{0};
-    for (const PlannedBlock& planned : plan_.blocks) {
-        if (planned.state != BlockState::Skipped) {
-            total += std::max(Minutes{0}, planned.end - planned.start);
-        }
+QString DayController::summaryName() const {
+    if (!day_) {
+        return {};
     }
-    return static_cast<int>(total.count());
+    const std::optional<ActivityId> activity =
+        summaryActivity(*day_, document_ ? document_->activities : std::vector<Activity>{});
+    return activity ? activityName(*activity) : QString();
+}
+
+int DayController::doneMinutes() const {
+    return static_cast<int>(summary().done.count());
+}
+
+int DayController::targetMinutes() const {
+    return static_cast<int>(summary().target.count());
 }
 
 int DayController::pushupsToday() const {
@@ -598,7 +601,14 @@ QString DayController::summaryText() const {
     if (!day_) {
         return {};
     }
-    return u"Work %1 / %2 · Push-ups %3"_s.arg(formatClock(doneMinutes()), formatClock(plannedMinutes()))
+    const ActivitySummary current = summary();
+    const QString name = summaryName();
+    if (name.isEmpty()) {
+        return u"Push-ups %1"_s.arg(pushupsToday());
+    }
+    return u"%1 %2 / %3 · Push-ups %4"_s
+        .arg(name, formatClock(static_cast<int>(current.done.count())),
+             formatClock(static_cast<int>(current.target.count())))
         .arg(pushupsToday());
 }
 
