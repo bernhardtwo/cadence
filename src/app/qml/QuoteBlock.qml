@@ -33,8 +33,9 @@ Item {
     property bool shown: true
     property int topPadding: 0
     property int horizontalAlignment: Text.AlignLeft
-    // Lines the slot allows before a quote counts as not fitting.
-    property int maxLines: root.overlay ? 4 : 3
+    // Lines the slot allows before a quote counts as not fitting. The overlay slot runs from the
+    // window's bottom margin up to the stack, so long quotes fit there.
+    property int maxLines: root.overlay ? 8 : 3
 
     readonly property bool overlay: root.variant === "overlay"
     readonly property int quoteSize: root.variant === "card" ? Theme.quoteSizeCard

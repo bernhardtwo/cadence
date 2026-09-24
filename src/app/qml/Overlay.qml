@@ -208,7 +208,7 @@ Window {
             }
 
             Rectangle {
-                width: Theme.buttonHeightLarge * 3
+                width: Math.max(Theme.buttonHeightLarge * 3, implicitWidth)
                 height: Theme.buttonHeightLarge * 2
                 radius: Theme.radius
                 color: Theme.bg
@@ -258,7 +258,7 @@ Window {
                 kind: "dark"
                 display: true
                 text: qsTr("LOG SET")
-                width: Theme.buttonHeightLarge * 4
+                width: Math.max(Theme.buttonHeightLarge * 4, implicitWidth)
                 onClicked: { DayController.logPushups(overlay.reps); overlay.dismiss("log-set") }
             }
 
@@ -267,7 +267,7 @@ Window {
                 kind: "dark"
                 display: true
                 text: qsTr("CONTINUE")
-                width: Theme.buttonHeightLarge * 4
+                width: Math.max(Theme.buttonHeightLarge * 4, implicitWidth)
                 onClicked: overlay.dismiss("continue")
             }
 
@@ -299,7 +299,7 @@ Window {
                 text: qsTr("Continue")
                 primary: true
                 display: true
-                width: Theme.buttonHeightLarge * 4
+                width: Math.max(Theme.buttonHeightLarge * 4, implicitWidth)
                 onClicked: overlay.dismiss("continue")
             }
         }
@@ -315,7 +315,7 @@ Window {
                 text: qsTr("START")
                 primary: true
                 display: true
-                width: Theme.buttonHeightLarge * 4
+                width: Math.max(Theme.buttonHeightLarge * 4, implicitWidth)
                 onClicked: { DayController.start(); overlay.dismiss("start") }
             }
 
@@ -346,7 +346,7 @@ Window {
                 text: qsTr("YES")
                 primary: true
                 display: true
-                width: Theme.buttonHeightLarge * 3
+                width: Math.max(Theme.buttonHeightLarge * 3, implicitWidth)
                 onClicked: { DayController.confirm(overlay.blockIndex, true); overlay.dismiss("confirm-yes") }
             }
 
@@ -354,7 +354,7 @@ Window {
                 kind: "outline"
                 text: qsTr("No")
                 implicitHeight: Theme.buttonHeightLarge
-                width: Theme.buttonHeightLarge * 3
+                width: Math.max(Theme.buttonHeightLarge * 3, implicitWidth)
                 onClicked: { DayController.confirm(overlay.blockIndex, false); overlay.dismiss("confirm-no") }
             }
         }
