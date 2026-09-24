@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cadence/core/block.hpp>
+#include <cadence/core/phase.hpp>
 #include <cadence/core/time.hpp>
 
 #include <cstddef>
@@ -38,6 +39,9 @@ struct BlockProgress {
     Minutes extended{0};
     // Resolves an Unconfirmed block: true means it happened (Done), false means it did not (Skipped).
     std::optional<bool> confirmed;
+    // The pomodoro session of the block, phase by phase, and the push-up prompts it showed.
+    std::vector<PhaseRecord> phases;
+    std::vector<PromptRecord> prompts;
 
     friend bool operator==(const BlockProgress&, const BlockProgress&) = default;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cadence/core/block.hpp>
+#include <cadence/core/phase.hpp>
 #include <cadence/core/time.hpp>
 
 #include <optional>
@@ -22,6 +23,8 @@ struct PhaseStarted {
     PomodoroState phase;
     // Index of the focus session the phase belongs to; a break carries the index of the session it follows.
     int index;
+    // When the phase began: the scheduled end of the previous one when replayed, else the call's now.
+    Instant at{};
 
     friend bool operator==(const PhaseStarted&, const PhaseStarted&) = default;
 };
@@ -33,8 +36,13 @@ struct PushupPrompt {
 };
 
 struct SessionCompleted {
+    Instant at{};
+
     friend bool operator==(const SessionCompleted&, const SessionCompleted&) = default;
 };
+
+PhaseKind phaseKindOf(PomodoroState state) noexcept;
+PomodoroState stateOf(PhaseKind kind) noexcept;
 
 using PomodoroEvent = std::variant<PhaseStarted, PushupPrompt, SessionCompleted>;
 using PomodoroEvents = std::vector<PomodoroEvent>;
@@ -47,6 +55,13 @@ public:
     // Empty when the block has no pomodoro plan or its count cannot be resolved.
     static std::optional<PomodoroSession> fromTemplate(const BlockTemplate& block) noexcept;
 
+    // Rebuilds a session from the phases recorded for the block, positioned in the last recorded
+    // phase with its pauses applied. A phase that already ended is caught up by the next tick.
+    // Empty when the block has no plan or nothing was recorded.
+    static std::optional<PomodoroSession> restore(const BlockTemplate& block,
+                                                  const std::vector<PhaseRecord>& history,
+                                                  std::chrono::local_days day) noexcept;
+
     PomodoroEvents start(Instant now);
     PomodoroEvents pause(Instant now);
     PomodoroEvents resume(Instant now);
@@ -55,7 +70,9 @@ public:
 
     PomodoroState state() const noexcept { return state_; }
     // The timed phase, also while paused, so a UI can show what will resume.
-    PomodoroState activePhase() const noexcept { return state_ == PomodoroState::Paused ? pausedFrom_ : state_; }
+    PomodoroState activePhase() const noexcept {
+        return state_ == PomodoroState::Paused ? pausedFrom_ : state_;
+    }
     int currentIndex() const noexcept { return index_; }
     int totalCount() const noexcept { return count_; }
     // Focus sessions finished so far; a break counts the session it follows as finished.

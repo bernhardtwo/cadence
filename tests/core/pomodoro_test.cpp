@@ -26,6 +26,16 @@ template <typename Event> bool has(const PomodoroEvents& events, const Event& ex
     return false;
 }
 
+bool hasPhase(const PomodoroEvents& events, PomodoroState phase, int index) {
+    for (const PomodoroEvent& event : events) {
+        if (const auto* started = std::get_if<PhaseStarted>(&event);
+            started && started->phase == phase && started->index == index) {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <typename Event> bool hasAny(const PomodoroEvents& events) {
     for (const PomodoroEvent& event : events) {
         if (std::holds_alternative<Event>(event)) {
@@ -129,7 +139,7 @@ TEST_CASE("a single session completes without any break", "[pomodoro]") {
     const PomodoroEvents events = session.tick(at(9, 25));
 
     CHECK(session.state() == PomodoroState::Completed);
-    CHECK(has(events, SessionCompleted{}));
+    CHECK(hasAny<SessionCompleted>(events));
     CHECK_FALSE(hasAny<PushupPrompt>(events));
 }
 
@@ -140,7 +150,7 @@ TEST_CASE("entering a break prompts for push-ups when the block asks for them", 
 
         const PomodoroEvents first = session.tick(at(9, 25));
         CHECK(session.state() == PomodoroState::ShortBreak);
-        CHECK(has(first, PhaseStarted{PomodoroState::ShortBreak, 0}));
+        CHECK(hasPhase(first, PomodoroState::ShortBreak, 0));
         CHECK(has(first, PushupPrompt{0}));
 
         session.tick(at(9, 30));
@@ -190,7 +200,7 @@ TEST_CASE("skip ends the current phase immediately", "[pomodoro]") {
 
     const PomodoroEvents events = session.skip(at(9, 5));
     CHECK(session.state() == PomodoroState::ShortBreak);
-    CHECK(has(events, PhaseStarted{PomodoroState::ShortBreak, 0}));
+    CHECK(hasPhase(events, PomodoroState::ShortBreak, 0));
     CHECK(session.remaining(at(9, 5)) == 5min);
 
     session.skip(at(9, 6));
@@ -213,9 +223,9 @@ TEST_CASE("a coarse tick replays the phases that elapsed in between", "[pomodoro
     CHECK(session.state() == PomodoroState::Focus);
     CHECK(session.currentIndex() == 1);
     CHECK(session.remaining(at(9, 40)) == 15min);
-    CHECK(has(events, PhaseStarted{PomodoroState::ShortBreak, 0}));
+    CHECK(hasPhase(events, PomodoroState::ShortBreak, 0));
     CHECK(has(events, PushupPrompt{0}));
-    CHECK(has(events, PhaseStarted{PomodoroState::Focus, 1}));
+    CHECK(hasPhase(events, PomodoroState::Focus, 1));
 }
 
 TEST_CASE("operations outside their state are ignored", "[pomodoro]") {
@@ -264,4 +274,118 @@ TEST_CASE("completed sessions count the focus phases that have ended", "[pomodor
     session.tick(clock.now());
     REQUIRE(session.state() == PomodoroState::Completed);
     CHECK(session.completedSessions() == 3);
+}
+
+namespace {
+
+BlockTemplate pomodoroBlock(int count) {
+    BlockTemplate block;
+    block.activityId = "work";
+    block.pomodoro = PomodoroPlan{};
+    block.pomodoro->count = count;
+    block.pushupsOnBreak = true;
+    return block;
+}
+
+constexpr std::chrono::local_days today{anyDate};
+
+Seconds sod(int hours, int minutes, int seconds = 0) {
+    return Seconds{hours * 3600 + minutes * 60 + seconds};
+}
+
+} // namespace
+
+TEST_CASE("events carry the instant the phase began", "[pomodoro]") {
+    PomodoroSession session(PomodoroPlan{}, 3, false);
+    FakeClock clock(at(9, 0));
+    PomodoroEvents events = session.start(clock.now());
+    REQUIRE(events.size() == 1);
+    CHECK(std::get<PhaseStarted>(events[0]).at == at(9, 0));
+
+    // A coarse tick replays the break at its scheduled instant, not at now.
+    clock.advance(40min);
+    events = session.tick(clock.now());
+    REQUIRE(events.size() == 2);
+    CHECK(std::get<PhaseStarted>(events[0]).at == at(9, 25));
+    CHECK(std::get<PhaseStarted>(events[1]).at == at(9, 30));
+}
+
+TEST_CASE("restore rebuilds a session in the middle of a focus phase", "[pomodoro][restore]") {
+    const std::vector<PhaseRecord> history = {
+        PhaseRecord{PhaseKind::Focus, 0, sod(9, 0), sod(9, 25)},
+        PhaseRecord{PhaseKind::ShortBreak, 0, sod(9, 25), sod(9, 30)},
+        PhaseRecord{PhaseKind::Focus, 1, sod(9, 30)},
+    };
+    auto session = PomodoroSession::restore(pomodoroBlock(4), history, today);
+    REQUIRE(session);
+    CHECK(session->state() == PomodoroState::Focus);
+    CHECK(session->currentIndex() == 1);
+    CHECK(session->completedSessions() == 1);
+    CHECK(session->remaining(at(9, 40)) == 15min);
+    CHECK(session->tick(at(9, 40)).empty());
+}
+
+TEST_CASE("restore rebuilds a session in the middle of a break", "[pomodoro][restore]") {
+    const std::vector<PhaseRecord> history = {
+        PhaseRecord{PhaseKind::Focus, 0, sod(9, 0), sod(9, 25)},
+        PhaseRecord{PhaseKind::ShortBreak, 0, sod(9, 25)},
+    };
+    auto session = PomodoroSession::restore(pomodoroBlock(4), history, today);
+    REQUIRE(session);
+    CHECK(session->state() == PomodoroState::ShortBreak);
+    CHECK(session->completedSessions() == 1);
+    CHECK(session->remaining(at(9, 27)) == 3min);
+
+    // The break ends while the app was down: the next tick moves on to the second focus.
+    const PomodoroEvents events = session->tick(at(9, 31));
+    REQUIRE(events.size() == 1);
+    CHECK(std::get<PhaseStarted>(events[0]) == PhaseStarted{PomodoroState::Focus, 1, at(9, 30)});
+    CHECK(session->remaining(at(9, 31)) == 24min);
+}
+
+TEST_CASE("restore keeps a paused phase paused with its frozen remaining time", "[pomodoro][restore]") {
+    PhaseRecord focus{PhaseKind::Focus, 2, sod(11, 0)};
+    focus.pauses.push_back(PhasePause{sod(11, 5), sod(11, 7)});
+    focus.pauses.push_back(PhasePause{sod(11, 10), std::nullopt});
+    auto session = PomodoroSession::restore(pomodoroBlock(4), {focus}, today);
+    REQUIRE(session);
+    CHECK(session->state() == PomodoroState::Paused);
+    CHECK(session->activePhase() == PomodoroState::Focus);
+    CHECK(session->currentIndex() == 2);
+    // Eight minutes of focus elapsed before the open pause: 11:00 to 11:10 less the two minute pause.
+    CHECK(session->remaining(at(12, 0)) == 17min);
+    CHECK(session->tick(at(12, 0)).empty());
+
+    session->resume(at(12, 0));
+    CHECK(session->state() == PomodoroState::Focus);
+    CHECK(session->remaining(at(12, 0)) == 17min);
+}
+
+TEST_CASE("restore accounts for finished pauses of a running phase", "[pomodoro][restore]") {
+    PhaseRecord focus{PhaseKind::Focus, 0, sod(9, 0)};
+    focus.pauses.push_back(PhasePause{sod(9, 5), sod(9, 15)});
+    auto session = PomodoroSession::restore(pomodoroBlock(2), {focus}, today);
+    REQUIRE(session);
+    CHECK(session->state() == PomodoroState::Focus);
+    CHECK(session->remaining(at(9, 20)) == 15min);
+}
+
+TEST_CASE("restore has nothing to rebuild without recorded phases or a plan", "[pomodoro][restore]") {
+    CHECK_FALSE(PomodoroSession::restore(pomodoroBlock(2), {}, today).has_value());
+    BlockTemplate plain;
+    plain.activityId = "lunch";
+    plain.durationMinutes = 60min;
+    CHECK_FALSE(PomodoroSession::restore(plain, {PhaseRecord{PhaseKind::Focus, 0, sod(9, 0)}}, today).has_value());
+}
+
+TEST_CASE("restore after a completed last phase replays the rest on the next tick", "[pomodoro][restore]") {
+    const std::vector<PhaseRecord> history = {
+        PhaseRecord{PhaseKind::Focus, 1, sod(9, 30), sod(9, 55)},
+    };
+    auto session = PomodoroSession::restore(pomodoroBlock(2), history, today);
+    REQUIRE(session);
+    const PomodoroEvents events = session->tick(at(10, 0));
+    REQUIRE(events.size() == 1);
+    CHECK(std::get<SessionCompleted>(events[0]).at == at(9, 55));
+    CHECK(session->state() == PomodoroState::Completed);
 }

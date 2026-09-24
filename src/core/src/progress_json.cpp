@@ -1,8 +1,7 @@
 #include <cadence/core/progress_json.hpp>
 
-#include <nlohmann/json.hpp>
-
 #include <cstddef>
+#include <nlohmann/json.hpp>
 #include <string>
 
 namespace cadence::core {
@@ -56,6 +55,166 @@ int minutesValue(Minutes value) noexcept {
     return static_cast<int>(value.count());
 }
 
+long long secondsValue(Seconds value) noexcept {
+    return static_cast<long long>(value.count());
+}
+
+Seconds asSeconds(const Json& value, const std::string& location) {
+    if (!value.is_number_integer()) {
+        fail(location, "expected an integer number of seconds");
+    }
+    return Seconds{value.get<long long>()};
+}
+
+std::optional<Seconds> optionalSeconds(const Json& object, const char* key, const std::string& location) {
+    const Json* member = optionalMember(object, key, location);
+    if (member == nullptr) {
+        return std::nullopt;
+    }
+    return asSeconds(*member, location + "." + key);
+}
+
+const Json& requireMember(const Json& object, const char* key, const std::string& location) {
+    const Json* member = optionalMember(object, key, location);
+    if (member == nullptr) {
+        fail(location, std::string("missing \"") + key + "\"");
+    }
+    return *member;
+}
+
+const char* phaseName(PhaseKind kind) noexcept {
+    switch (kind) {
+    case PhaseKind::Focus:
+        return "focus";
+    case PhaseKind::ShortBreak:
+        return "shortBreak";
+    case PhaseKind::LongBreak:
+        return "longBreak";
+    }
+    return "focus";
+}
+
+PhaseKind parsePhase(const Json& value, const std::string& location) {
+    if (!value.is_string()) {
+        fail(location, "expected a string");
+    }
+    const std::string text = value.get<std::string>();
+    if (text == "focus") {
+        return PhaseKind::Focus;
+    }
+    if (text == "shortBreak") {
+        return PhaseKind::ShortBreak;
+    }
+    if (text == "longBreak") {
+        return PhaseKind::LongBreak;
+    }
+    fail(location, "unknown phase \"" + text + "\", expected focus, shortBreak or longBreak");
+}
+
+const char* answerName(PromptAnswer answer) noexcept {
+    switch (answer) {
+    case PromptAnswer::Pending:
+        return "pending";
+    case PromptAnswer::Logged:
+        return "logged";
+    case PromptAnswer::Skipped:
+        return "skipped";
+    }
+    return "pending";
+}
+
+PromptAnswer parseAnswer(const Json& value, const std::string& location) {
+    if (!value.is_string()) {
+        fail(location, "expected a string");
+    }
+    const std::string text = value.get<std::string>();
+    if (text == "pending") {
+        return PromptAnswer::Pending;
+    }
+    if (text == "logged") {
+        return PromptAnswer::Logged;
+    }
+    if (text == "skipped") {
+        return PromptAnswer::Skipped;
+    }
+    fail(location, "unknown answer \"" + text + "\", expected pending, logged or skipped");
+}
+
+Json toJson(const PhaseRecord& phase) {
+    Json out;
+    out["phase"] = phaseName(phase.kind);
+    out["index"] = phase.index;
+    out["start"] = secondsValue(phase.start);
+    if (phase.end) {
+        out["end"] = secondsValue(*phase.end);
+    }
+    if (phase.skipped) {
+        out["skipped"] = true;
+    }
+    if (!phase.pauses.empty()) {
+        Json pauses = Json::array();
+        for (const PhasePause& pause : phase.pauses) {
+            Json item;
+            item["start"] = secondsValue(pause.start);
+            if (pause.end) {
+                item["end"] = secondsValue(*pause.end);
+            }
+            pauses.push_back(std::move(item));
+        }
+        out["pauses"] = std::move(pauses);
+    }
+    return out;
+}
+
+PhaseRecord parsePhaseRecord(const Json& value, const std::string& location) {
+    PhaseRecord record;
+    record.kind = parsePhase(requireMember(value, "phase", location), location + ".phase");
+    const Json& index = requireMember(value, "index", location);
+    if (!index.is_number_integer()) {
+        fail(location + ".index", "expected an integer");
+    }
+    record.index = index.get<int>();
+    record.start = asSeconds(requireMember(value, "start", location), location + ".start");
+    record.end = optionalSeconds(value, "end", location);
+    record.skipped = optionalBool(value, "skipped", location, false);
+    if (const Json* pauses = optionalMember(value, "pauses", location)) {
+        const std::string pausesLocation = location + ".pauses";
+        if (!pauses->is_array()) {
+            fail(pausesLocation, "expected an array");
+        }
+        for (std::size_t i = 0; i < pauses->size(); ++i) {
+            const std::string pauseLocation = pausesLocation + "[" + std::to_string(i) + "]";
+            const Json& item = (*pauses)[i];
+            record.pauses.push_back(
+                PhasePause{asSeconds(requireMember(item, "start", pauseLocation), pauseLocation + ".start"),
+                           optionalSeconds(item, "end", pauseLocation)});
+        }
+    }
+    return record;
+}
+
+Json toJson(const PromptRecord& prompt) {
+    Json out;
+    out["set"] = prompt.setIndex;
+    out["shown"] = secondsValue(prompt.shown);
+    out["answer"] = answerName(prompt.answer);
+    return out;
+}
+
+PromptRecord parsePromptRecord(const Json& value, const std::string& location) {
+    PromptRecord record;
+    const Json& set = requireMember(value, "set", location);
+    if (!set.is_number_integer()) {
+        fail(location + ".set", "expected an integer");
+    }
+    record.setIndex = set.get<int>();
+    record.shown = asSeconds(requireMember(value, "shown", location), location + ".shown");
+    if (const Json* answer = optionalMember(value, "answer", location)) {
+        record.answer = parseAnswer(*answer, location + ".answer");
+    }
+    return record;
+}
+
 Json toJson(const BlockProgress& progress) {
     Json out = Json::object();
     if (progress.actualStart) {
@@ -88,6 +247,20 @@ Json toJson(const BlockProgress& progress) {
     if (progress.confirmed) {
         out["confirmed"] = *progress.confirmed;
     }
+    if (!progress.phases.empty()) {
+        Json phases = Json::array();
+        for (const PhaseRecord& phase : progress.phases) {
+            phases.push_back(toJson(phase));
+        }
+        out["phases"] = std::move(phases);
+    }
+    if (!progress.prompts.empty()) {
+        Json prompts = Json::array();
+        for (const PromptRecord& prompt : progress.prompts) {
+            prompts.push_back(toJson(prompt));
+        }
+        out["prompts"] = std::move(prompts);
+    }
     return out;
 }
 
@@ -107,8 +280,8 @@ BlockProgress parseBlock(const Json& value, const std::string& location) {
             if (start == nullptr) {
                 fail(pauseLocation, "missing \"start\"");
             }
-            progress.pauses.push_back(
-                PauseInterval{asMinutes(*start, pauseLocation + ".start"), optionalMinutes(item, "end", pauseLocation)});
+            progress.pauses.push_back(PauseInterval{asMinutes(*start, pauseLocation + ".start"),
+                                                    optionalMinutes(item, "end", pauseLocation)});
         }
     }
     progress.skipped = optionalBool(value, "skipped", location, false);
@@ -119,6 +292,27 @@ BlockProgress parseBlock(const Json& value, const std::string& location) {
             fail(location + ".confirmed", "expected true or false");
         }
         progress.confirmed = confirmed->get<bool>();
+    }
+    // Files written before phases were recorded simply have none.
+    if (const Json* phases = optionalMember(value, "phases", location)) {
+        const std::string phasesLocation = location + ".phases";
+        if (!phases->is_array()) {
+            fail(phasesLocation, "expected an array");
+        }
+        for (std::size_t i = 0; i < phases->size(); ++i) {
+            progress.phases.push_back(
+                parsePhaseRecord((*phases)[i], phasesLocation + "[" + std::to_string(i) + "]"));
+        }
+    }
+    if (const Json* prompts = optionalMember(value, "prompts", location)) {
+        const std::string promptsLocation = location + ".prompts";
+        if (!prompts->is_array()) {
+            fail(promptsLocation, "expected an array");
+        }
+        for (std::size_t i = 0; i < prompts->size(); ++i) {
+            progress.prompts.push_back(
+                parsePromptRecord((*prompts)[i], promptsLocation + "[" + std::to_string(i) + "]"));
+        }
     }
     return progress;
 }
@@ -164,8 +358,8 @@ DayProgress parseDayProgress(std::string_view json) {
         fail("version", "missing or not an integer");
     }
     if (version->get<int>() != progressSchemaVersion) {
-        fail("version", "unsupported progress version " + std::to_string(version->get<int>()) + ", expected " +
-                            std::to_string(progressSchemaVersion));
+        fail("version", "unsupported progress version " + std::to_string(version->get<int>()) +
+                            ", expected " + std::to_string(progressSchemaVersion));
     }
 
     DayProgress progress;
