@@ -231,6 +231,8 @@ int main(int argc, char* argv[]) {
     QObject::connect(&settings, &Settings::changed, &language,
                      [&language, &settings] { language.apply(settings.language()); });
     QObject::connect(&language, &LanguageManager::changed, &controller, &DayController::evaluateNow);
+    QObject::connect(&language, &LanguageManager::changed, &editor, &TemplateEditor::retranslate);
+    QObject::connect(&language, &LanguageManager::changed, &spotify, &SpotifyPlayer::changed);
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         [] { QCoreApplication::exit(EXIT_FAILURE); }, Qt::QueuedConnection);
@@ -253,6 +255,7 @@ int main(int argc, char* argv[]) {
         QObject::connect(tray.get(), &TrayController::quitRequested, &app, &QCoreApplication::quit);
         QObject::connect(tray.get(), &TrayController::autostartChanged, &settings, &Settings::refresh);
         QObject::connect(&settings, &Settings::changed, tray.get(), &TrayController::syncAutostart);
+        QObject::connect(&language, &LanguageManager::changed, tray.get(), &TrayController::retranslate);
     }
     QObject::connect(&instance, &SingleInstance::commandReceived, window,
                      [window](const QByteArray& command) {

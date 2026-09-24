@@ -34,8 +34,8 @@ Rectangle {
             top: parent.top
             margins: Theme.spacing40
         }
-        text: DayController.currentName.toUpperCase()
-              + (root.pomodoro ? " · POMODORO " + DayController.pomodoroIndex + " / " + DayController.pomodoroTotal : "")
+        text: root.pomodoro ? qsTr("%1 · POMODORO %2 / %3").arg(DayController.currentName.toUpperCase()).arg(DayController.pomodoroIndex).arg(DayController.pomodoroTotal)
+                            : DayController.currentName.toUpperCase()
         color: Theme.textMuted
         font.family: Theme.bodyFamily
         font.weight: Theme.bodyWeightSemiBold
@@ -50,7 +50,7 @@ Rectangle {
             margins: Theme.spacing40
         }
         kind: "outline"
-        text: "Exit · Esc"
+        text: qsTr("Exit · Esc")
         onClicked: root.exitRequested()
     }
 
@@ -61,8 +61,8 @@ Rectangle {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.pomodoro ? DayController.pomodoroPhase.toUpperCase()
-                                : DayController.currentActive ? "BLOCK" : "STARTS IN"
+            text: root.pomodoro ? DayController.pomodoroPhaseText.toUpperCase()
+                                : DayController.currentActive ? qsTr("BLOCK") : qsTr("STARTS IN")
             color: Theme.textMuted
             font.family: Theme.bodyFamily
             font.weight: Theme.bodyWeightSemiBold
@@ -98,7 +98,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             horizontalAlignment: Text.AlignHCenter
             visible: root.pomodoro
-            text: "Block ends " + DayController.currentEndText + " · " + DayController.remainingText + " left"
+            text: qsTr("Block ends %1 · %2 left").arg(DayController.currentEndText).arg(DayController.remainingText)
             color: Theme.textMuted
             font.family: Theme.bodyFamily
             font.weight: Theme.bodyWeightMedium
@@ -107,7 +107,7 @@ Rectangle {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: DayController.paused ? "Paused · Space to resume" : "Space to pause"
+            text: DayController.paused ? qsTr("Paused · Space to resume") : qsTr("Space to pause")
             color: Theme.textMuted
             font.family: Theme.bodyFamily
             font.pixelSize: Theme.labelSize
@@ -167,7 +167,7 @@ Rectangle {
 
             Text {
                 width: parent.width
-                text: Spotify.hasActiveDevice ? Spotify.trackName : "Open Spotify on this PC"
+                text: Spotify.hasActiveDevice ? Spotify.trackName : qsTr("Open Spotify on this PC")
                 color: Theme.text
                 elide: Text.ElideRight
                 font.family: Theme.bodyFamily
@@ -212,25 +212,25 @@ Rectangle {
             SignalButton {
                 visible: Spotify.canTransferHere
                 kind: "primary"
-                text: "Play here"
+                text: qsTr("Play here")
                 onClicked: Spotify.transferHere()
             }
 
             SignalButton {
-                text: "Prev"
+                text: qsTr("Prev")
                 enabled: Spotify.hasActiveDevice
                 onClicked: Spotify.previous()
             }
 
             SignalButton {
                 kind: "light"
-                text: Spotify.isPlaying ? "Pause" : "Play"
+                text: Spotify.isPlaying ? qsTr("Pause") : qsTr("Play")
                 enabled: Spotify.hasActiveDevice || Spotify.canTransferHere
                 onClicked: Spotify.playPause()
             }
 
             SignalButton {
-                text: "Next"
+                text: qsTr("Next")
                 enabled: Spotify.hasActiveDevice
                 onClicked: Spotify.next()
             }

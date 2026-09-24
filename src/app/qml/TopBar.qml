@@ -8,7 +8,7 @@ Item {
     id: root
 
     property int currentScreen: 0
-    readonly property var screens: ["Today", "Stats", "Templates", "Settings"]
+    readonly property var screens: [qsTr("Today"), qsTr("Stats"), qsTr("Templates"), qsTr("Settings")]
 
     signal screenRequested(int index)
 

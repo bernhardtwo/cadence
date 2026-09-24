@@ -73,7 +73,7 @@ Rectangle {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.doesNotFit || root.block.overrunsCutoff
-                text: root.doesNotFit ? "DOES NOT FIT" : "OVERRUNS CUTOFF"
+                text: root.doesNotFit ? qsTr("DOES NOT FIT") : qsTr("OVERRUNS CUTOFF")
                 color: Theme.alert
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightSemiBold
@@ -93,7 +93,7 @@ Rectangle {
                     id: confirmLabel
 
                     anchors.centerIn: parent
-                    text: "CONFIRM?"
+                    text: qsTr("CONFIRM?")
                     color: Theme.textOnAccent
                     font.family: Theme.bodyFamily
                     font.weight: Theme.bodyWeightSemiBold
@@ -115,21 +115,21 @@ Rectangle {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: "Did it happen?"
+                    text: qsTr("Did it happen?")
                     color: Theme.text
                     font.family: Theme.bodyFamily
                     font.pixelSize: Theme.bodySize
                 }
 
                 SignalButton {
-                    text: "Yes"
+                    text: qsTr("Yes")
                     primary: true
                     implicitHeight: Theme.touchTarget - Theme.spacing8
                     onClicked: DayController.confirm(root.block.index, true)
                 }
 
                 SignalButton {
-                    text: "No"
+                    text: qsTr("No")
                     implicitHeight: Theme.touchTarget - Theme.spacing8
                     onClicked: DayController.confirm(root.block.index, false)
                 }
@@ -137,7 +137,7 @@ Rectangle {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.block.start + " to " + root.block.end
+                text: qsTr("%1 to %2").arg(root.block.start).arg(root.block.end)
                 color: Theme.textMuted
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightMedium
@@ -155,7 +155,7 @@ Rectangle {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.isDone || root.isSkipped
-                text: root.block.state
+                text: root.block.stateText
                 color: Theme.textMuted
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightMedium
@@ -181,7 +181,8 @@ Rectangle {
                 top: parent.top
                 left: parent.left
             }
-            text: root.block.start + " to " + root.block.end + " · " + (root.isActive ? "NOW" : "NEXT")
+            text: root.isActive ? qsTr("%1 to %2 · NOW").arg(root.block.start).arg(root.block.end)
+                                : qsTr("%1 to %2 · NEXT").arg(root.block.start).arg(root.block.end)
             color: root.ink
             font.family: Theme.bodyFamily
             font.weight: Theme.bodyWeightSemiBold
@@ -195,7 +196,7 @@ Rectangle {
                 right: parent.right
             }
             visible: root.block.overrunsCutoff
-            text: "OVERRUNS CUTOFF"
+            text: qsTr("OVERRUNS CUTOFF")
             color: Theme.alert
             font.family: Theme.bodyFamily
             font.weight: Theme.bodyWeightSemiBold
@@ -231,7 +232,7 @@ Rectangle {
             }
             horizontalAlignment: Text.AlignRight
             text: !root.isActive
-                  ? (DayController.remainingSeconds > 0 ? DayController.remainingText : "READY")
+                  ? (DayController.remainingSeconds > 0 ? DayController.remainingText : qsTr("READY"))
                   : DayController.hasPomodoro ? root.mmss(DayController.pomodoroRemainingSeconds)
                                               : DayController.remainingText
             color: root.ink
@@ -252,8 +253,8 @@ Rectangle {
                 anchors.right: parent.right
                 visible: root.isActive && DayController.hasPomodoro
                 text: DayController.pomodoroOnBreak
-                      ? DayController.pomodoroPhase.toUpperCase()
-                      : "FOCUS " + DayController.pomodoroIndex + " / " + DayController.pomodoroTotal
+                      ? DayController.pomodoroPhaseText.toUpperCase()
+                      : qsTr("FOCUS %1 / %2").arg(DayController.pomodoroIndex).arg(DayController.pomodoroTotal)
                 color: root.ink
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightSemiBold
@@ -265,7 +266,7 @@ Rectangle {
                 anchors.right: parent.right
                 horizontalAlignment: Text.AlignRight
                 visible: root.isActive && DayController.hasPomodoro
-                text: "Block ends " + root.block.end + " · " + DayController.remainingText + " left"
+                text: qsTr("Block ends %1 · %2 left").arg(root.block.end).arg(DayController.remainingText)
                 color: root.inkMuted
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightMedium
@@ -275,7 +276,7 @@ Rectangle {
             Text {
                 anchors.right: parent.right
                 visible: !root.isActive
-                text: DayController.remainingSeconds > 0 ? "until start" : "waiting for you"
+                text: DayController.remainingSeconds > 0 ? qsTr("until start") : qsTr("waiting for you")
                 color: root.inkMuted
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightMedium

@@ -53,7 +53,7 @@ Item {
 
             Text {
                 visible: DayController.freeDay
-                text: "FREE DAY"
+                text: qsTr("FREE DAY")
                 color: Theme.textMuted
                 font.family: Theme.displayFamily
                 font.weight: Theme.displayWeightExtraBold
@@ -115,9 +115,8 @@ Item {
         Text {
             width: parent.width
             text: DayController.hasPomodoro
-                  ? DayController.pomodoroIndex + " of " + DayController.pomodoroTotal + " · " + DayController.nextBreakText
-                  : DayController.pomodoroTotal === 1 ? "1 pomodoro"
-                  : DayController.pomodoroTotal > 1 ? DayController.pomodoroTotal + " pomodoros" : "No pomodoros"
+                  ? qsTr("%1 of %2 · %3").arg(DayController.pomodoroIndex).arg(DayController.pomodoroTotal).arg(DayController.nextBreakText)
+                  : DayController.pomodoroTotal > 0 ? qsTr("%n pomodoro(s)", "", DayController.pomodoroTotal) : qsTr("No pomodoros")
             color: Theme.text
             elide: Text.ElideRight
             font.family: Theme.bodyFamily
@@ -150,8 +149,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - Theme.spacing24 - Theme.spacing8
                 text: Spotify.hasActiveDevice
-                      ? (Spotify.isPlaying ? "Playing " : "Paused ") + Spotify.trackName + " · " + Spotify.artists
-                      : "Open Spotify on this PC"
+                      ? (Spotify.isPlaying ? qsTr("Playing %1 · %2") : qsTr("Paused %1 · %2")).arg(Spotify.trackName).arg(Spotify.artists)
+                      : qsTr("Open Spotify on this PC")
                 color: Theme.textMuted
                 elide: Text.ElideRight
                 font.family: Theme.bodyFamily
@@ -168,7 +167,7 @@ Item {
             width: parent.width
             display: true
             kind: DayController.canStart ? "primary" : "light"
-            text: DayController.canStart ? "START BLOCK" : DayController.canResume ? "RESUME" : "FOCUS MODE"
+            text: DayController.canStart ? qsTr("START BLOCK") : DayController.canResume ? qsTr("RESUME") : qsTr("FOCUS MODE")
             enabled: DayController.canStart || DayController.canResume || DayController.running
             onClicked: {
                 if (DayController.canStart) {
@@ -187,14 +186,14 @@ Item {
 
             SignalButton {
                 width: (parent.width - Theme.spacing12) / 2
-                text: DayController.paused ? "Resume" : "Pause"
+                text: DayController.paused ? qsTr("Resume") : qsTr("Pause")
                 enabled: DayController.canPause || DayController.canResume
                 onClicked: DayController.paused ? DayController.resume() : DayController.pause()
             }
 
             SignalButton {
                 width: (parent.width - Theme.spacing12) / 2
-                text: "Skip block"
+                text: qsTr("Skip block")
                 enabled: DayController.canSkip
                 onClicked: DayController.skip()
             }
@@ -206,14 +205,14 @@ Item {
 
             SignalButton {
                 width: (parent.width - Theme.spacing12) / 2
-                text: "Postpone"
+                text: qsTr("Postpone")
                 enabled: DayController.canPostpone
                 onClicked: DayController.postpone()
             }
 
             SignalButton {
                 width: (parent.width - Theme.spacing12) / 2
-                text: "+10 min"
+                text: qsTr("+10 min")
                 enabled: DayController.canExtend
                 onClicked: DayController.extend(10)
             }
@@ -222,7 +221,7 @@ Item {
         SignalButton {
             width: parent.width
             kind: "outline"
-            text: "Finish block"
+            text: qsTr("Finish block")
             visible: DayController.canFinish
             onClicked: DayController.finish()
         }
@@ -230,7 +229,7 @@ Item {
         SignalButton {
             width: parent.width
             kind: "outline"
-            text: "Focus mode"
+            text: qsTr("Focus mode")
             visible: !DayController.running && !DayController.freeDay
             onClicked: root.focusModeRequested()
         }
@@ -238,7 +237,7 @@ Item {
         Text {
             width: parent.width
             visible: DayController.doesNotFit
-            text: "The day no longer fits before the cutoff"
+            text: qsTr("The day no longer fits before the cutoff")
             color: Theme.alert
             wrapMode: Text.Wrap
             font.family: Theme.bodyFamily

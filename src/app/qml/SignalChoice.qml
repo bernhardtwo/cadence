@@ -2,13 +2,19 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Cadence.Theme
 
-// A row of exclusive pills. options is a list of strings; current is the selected one.
+// A row of exclusive pills. options are the labels shown; values, when given, are the matching
+// keys reported and compared, so labels can be translated while keys stay stable.
 Item {
     id: root
 
     property string label
     property var options: []
+    property var values: []
     property string current: ""
+
+    function valueAt(index) {
+        return root.values.length > index ? root.values[index] : root.options[index]
+    }
 
     signal chosen(string option)
 
@@ -45,11 +51,12 @@ Item {
                 id: pill
 
                 required property string modelData
+                required property int index
 
                 text: pill.modelData
-                active: root.current === pill.modelData
+                active: root.current === root.valueAt(pill.index)
                 implicitHeight: Theme.touchTarget
-                onClicked: root.chosen(pill.modelData)
+                onClicked: root.chosen(root.valueAt(pill.index))
             }
         }
     }

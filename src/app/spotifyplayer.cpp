@@ -90,17 +90,17 @@ QString SpotifyPlayer::redirectUri() const {
 QString SpotifyPlayer::statusText() const {
     switch (auth_.state()) {
     case SpotifyAuth::State::Disconnected:
-        return configured() ? u"Not connected"_s : u"Paste your Client ID to begin"_s;
+        return configured() ? tr("Not connected") : tr("Paste your Client ID to begin");
     case SpotifyAuth::State::Connecting:
-        return u"Connecting"_s;
+        return tr("Connecting");
     case SpotifyAuth::State::Connected:
         if (displayName_.isEmpty()) {
-            return u"Connected"_s;
+            return tr("Connected");
         }
-        return premium() ? u"Connected as %1 · Premium"_s.arg(displayName_)
-                         : u"Connected as %1"_s.arg(displayName_);
+        return premium() ? tr("Connected as %1 · Premium").arg(displayName_)
+                         : tr("Connected as %1").arg(displayName_);
     case SpotifyAuth::State::Error:
-        return u"Connection problem"_s;
+        return tr("Connection problem");
     }
     return {};
 }
@@ -110,7 +110,7 @@ QString SpotifyPlayer::errorText() const {
         return auth_.error();
     }
     if (connected() && !client_.online()) {
-        return u"Spotify is unreachable right now"_s;
+        return tr("Spotify is unreachable right now");
     }
     return error_;
 }
@@ -251,24 +251,24 @@ void SpotifyPlayer::handleCommandResult(const QString& what, const Classificatio
         setError({});
         break;
     case Outcome::NoActiveDevice:
-        setError(u"Open Spotify on this PC"_s);
+        setError(tr("Open Spotify on this PC"));
         break;
     case Outcome::PremiumRequired:
-        setError(u"Spotify Premium is required to control playback"_s);
+        setError(tr("Spotify Premium is required to control playback"));
         break;
     case Outcome::Unauthorized:
-        setError(u"Spotify signed you out. Connect again."_s);
+        setError(tr("Spotify signed you out. Connect again."));
         break;
     case Outcome::RateLimited:
-        setError(u"Spotify asked to slow down"_s);
+        setError(tr("Spotify asked to slow down"));
         break;
     case Outcome::Forbidden:
-        setError(u"Spotify refused that command"_s);
+        setError(tr("Spotify refused that command"));
         break;
     case Outcome::NotFound:
     case Outcome::ServerError:
     case Outcome::Other:
-        setError(u"Spotify error on %1: %2"_s.arg(what, QString::fromStdString(result.message)));
+        setError(tr("Spotify error on %1: %2").arg(what, QString::fromStdString(result.message)));
         break;
     }
     if (result.outcome != Outcome::Ok && result.outcome != Outcome::NothingToPause) {

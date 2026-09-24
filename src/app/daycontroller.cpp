@@ -63,6 +63,56 @@ QString phaseName(PomodoroState state) {
     return {};
 }
 
+// The names above are keys: QML compares against them and the log records them. The labels
+// below are what the user reads.
+QString stateLabel(BlockState state) {
+    switch (state) {
+    case BlockState::Done:
+        return DayController::tr("Done");
+    case BlockState::Active:
+        return DayController::tr("Active");
+    case BlockState::Upcoming:
+        return DayController::tr("Upcoming");
+    case BlockState::Skipped:
+        return DayController::tr("Skipped");
+    case BlockState::DoesNotFit:
+        return DayController::tr("Does not fit");
+    case BlockState::Unconfirmed:
+        return DayController::tr("Unconfirmed");
+    }
+    return {};
+}
+
+QString kindLabel(BlockKind kind) {
+    switch (kind) {
+    case BlockKind::Anchored:
+        return DayController::tr("Anchored");
+    case BlockKind::Flexible:
+        return DayController::tr("Flexible");
+    case BlockKind::Soft:
+        return DayController::tr("Soft");
+    }
+    return {};
+}
+
+QString phaseLabel(PomodoroState state) {
+    switch (state) {
+    case PomodoroState::Idle:
+        return DayController::tr("Idle");
+    case PomodoroState::Focus:
+        return DayController::tr("Focus");
+    case PomodoroState::ShortBreak:
+        return DayController::tr("Short break");
+    case PomodoroState::LongBreak:
+        return DayController::tr("Long break");
+    case PomodoroState::Paused:
+        return DayController::tr("Paused");
+    case PomodoroState::Completed:
+        return DayController::tr("Completed");
+    }
+    return {};
+}
+
 DayController::Alarm toAlarm(AlarmKind kind) {
     switch (kind) {
     case AlarmKind::BlockStart:
@@ -305,32 +355,33 @@ void DayController::raise(const cadence::core::Alarm& alarm) {
     switch (alarm.kind) {
     case AlarmKind::BlockStart:
         title = name;
-        message = u"Block starts now"_s;
+        message = tr("Block starts now");
         break;
     case AlarmKind::BlockEndingSoon:
         title = name;
-        message = u"Ends in %1 minutes"_s.arg(scheduler_.policy().endingSoonLead.count());
+        message =
+            tr("Ends in %n minute(s)", nullptr, static_cast<int>(scheduler_.policy().endingSoonLead.count()));
         break;
     case AlarmKind::SoftReminder:
         title = name;
-        message = u"Whenever you are ready"_s;
+        message = tr("Whenever you are ready");
         break;
     case AlarmKind::PomodoroFocusEnd:
-        title = u"Focus done"_s;
-        message = session_ && session_->state() != PomodoroState::Completed ? u"Take a break"_s
-                                                                            : u"Last pomodoro finished"_s;
+        title = tr("Focus done");
+        message = session_ && session_->state() != PomodoroState::Completed ? tr("Take a break")
+                                                                            : tr("Last pomodoro finished");
         break;
     case AlarmKind::BreakEnd:
-        title = u"Break over"_s;
-        message = u"Back to focus"_s;
+        title = tr("Break over");
+        message = tr("Back to focus");
         break;
     case AlarmKind::DayNoLongerFits:
-        title = u"The day no longer fits"_s;
-        message = u"Some blocks end after the cutoff"_s;
+        title = tr("The day no longer fits");
+        message = tr("Some blocks end after the cutoff");
         break;
     case AlarmKind::UnconfirmedPending:
         title = name;
-        message = u"Did you do this?"_s;
+        message = tr("Did you do this?");
         break;
     }
     emit alarmRaised(toAlarm(alarm.kind), index, title, message);
@@ -433,12 +484,12 @@ QString DayController::blockDetail(std::size_t index, const PlannedBlock& planne
     }
     QStringList parts;
     const int minutes = static_cast<int>((planned.end - planned.start).count());
-    parts.push_back(minutes >= 60 ? u"%1 h"_s.arg(formatClock(minutes)) : u"%1 min"_s.arg(minutes));
+    parts.push_back(minutes >= 60 ? tr("%1 h").arg(formatClock(minutes)) : tr("%1 min").arg(minutes));
     if (const auto count = resolvedPomodoroCount(*tpl); count && *count > 0) {
-        parts.push_back(*count == 1 ? u"1 pomodoro"_s : u"%1 pomodoros"_s.arg(*count));
+        parts.push_back(tr("%n pomodoro(s)", nullptr, *count));
     }
     if (tpl->pushupsOnBreak) {
-        parts.push_back(u"push-ups"_s);
+        parts.push_back(tr("push-ups"));
     }
     return parts.join(u" · "_s);
 }
@@ -449,7 +500,8 @@ QString DayController::dateText() const {
     }
     const QDate date(static_cast<int>(date_->year()), static_cast<int>(static_cast<unsigned>(date_->month())),
                      static_cast<int>(static_cast<unsigned>(date_->day())));
-    return date.toString(u"dddd d MMMM"_s);
+    // The default locale follows the UI language, so the weekday and month come out in it.
+    return QLocale().toString(date, u"dddd d MMMM"_s);
 }
 
 int DayController::currentIndex() const {
@@ -458,10 +510,10 @@ int DayController::currentIndex() const {
 
 QString DayController::currentName() const {
     if (!day_) {
-        return u"Free day"_s;
+        return tr("Free day");
     }
     if (!current_) {
-        return u"Day complete"_s;
+        return tr("Day complete");
     }
     return blockName(static_cast<int>(*current_));
 }
@@ -554,6 +606,10 @@ QString DayController::pomodoroPhase() const {
     return hasPomodoro() ? phaseName(session_->state()) : QString();
 }
 
+QString DayController::pomodoroPhaseText() const {
+    return hasPomodoro() ? phaseLabel(session_->state()) : QString();
+}
+
 int DayController::pomodoroRemainingSeconds() const {
     return hasPomodoro() ? static_cast<int>(session_->remaining(now_).count()) : 0;
 }
@@ -610,21 +666,21 @@ QString DayController::nextBreakText() const {
     const int done = session_->completedSessions();
     const PomodoroState state = session_->state();
     if (state == PomodoroState::Completed) {
-        return u"all done"_s;
+        return tr("all done");
     }
     if (state == PomodoroState::ShortBreak || state == PomodoroState::LongBreak) {
-        return u"on a break"_s;
+        return tr("on a break");
     }
     // The break after the running session; the last session ends the block instead.
     const int session = done + 1;
     if (session >= session_->totalCount()) {
-        return u"last one"_s;
+        return tr("last one");
     }
     const bool longBreak = plan.longBreakEvery > 0 && session % plan.longBreakEvery == 0;
     const Minutes length = longBreak ? plan.longBreak : plan.shortBreak;
-    QString text = u"next break: %1 min"_s.arg(length.count());
+    const QString text = tr("next break: %1 min").arg(length.count());
     if (session_->pushupsOnBreak()) {
-        text += u" + push-ups"_s;
+        return tr("%1 + push-ups").arg(text);
     }
     return text;
 }
@@ -675,9 +731,9 @@ QString DayController::summaryText() const {
     const ActivitySummary current = summary();
     const QString name = summaryName();
     if (name.isEmpty()) {
-        return u"Push-ups %1"_s.arg(pushupsToday());
+        return tr("Push-ups %1").arg(pushupsToday());
     }
-    return u"%1 %2 / %3 · Push-ups %4"_s
+    return tr("%1 %2 / %3 · Push-ups %4")
         .arg(name, formatClock(static_cast<int>(current.done.count())),
              formatClock(static_cast<int>(current.target.count())))
         .arg(pushupsToday());
@@ -694,9 +750,11 @@ QVariantList DayController::planList() const {
         row[u"index"_s] = static_cast<int>(planned.templateIndex);
         row[u"name"_s] = activityName(tpl->activityId);
         row[u"kind"_s] = kindName(tpl->kind);
+        row[u"kindText"_s] = kindLabel(tpl->kind);
         row[u"start"_s] = timeText(planned.start);
         row[u"end"_s] = timeText(planned.end);
         row[u"state"_s] = stateName(planned.state);
+        row[u"stateText"_s] = stateLabel(planned.state);
         row[u"overrunsCutoff"_s] = planned.overrunsCutoff;
         row[u"current"_s] = current_ && *current_ == planned.templateIndex;
         row[u"durationMinutes"_s] =

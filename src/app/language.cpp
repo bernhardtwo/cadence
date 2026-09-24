@@ -61,6 +61,20 @@ QStringList LanguageManager::codes() const {
     return out;
 }
 
+QStringList LanguageManager::shortDayNames() const {
+    const QLocale locale(current_.isEmpty() ? u"en"_s : current_);
+    QStringList out;
+    for (int day = 1; day <= 7; ++day) {
+        QString name = locale.standaloneDayName(day, QLocale::ShortFormat);
+        // CLDR abbreviates with a trailing period in Spanish and French; the pills do not want it.
+        if (name.endsWith(u'.')) {
+            name.chop(1);
+        }
+        out.push_back(name);
+    }
+    return out;
+}
+
 QString LanguageManager::nativeName(const QString& code) const {
     QString name = QLocale(code).nativeLanguageName();
     if (name.isEmpty()) {
@@ -80,13 +94,12 @@ void LanguageManager::apply(const QString& setting) {
         QCoreApplication::removeTranslator(&translator_);
         installed_ = false;
     }
-    if (code != u"en"_s) {
-        if (translator_.load(u":/i18n/cadence_"_s + code + u".qm"_s)) {
-            QCoreApplication::installTranslator(&translator_);
-            installed_ = true;
-        } else {
-            qWarning("No translation bundled for %s", qPrintable(code));
-        }
+    // English is the source language, but its catalog still carries the plural forms.
+    if (translator_.load(u":/i18n/cadence_"_s + code + u".qm"_s)) {
+        QCoreApplication::installTranslator(&translator_);
+        installed_ = true;
+    } else {
+        qWarning("No translation bundled for %s", qPrintable(code));
     }
     QLocale::setDefault(QLocale(code));
     current_ = code;

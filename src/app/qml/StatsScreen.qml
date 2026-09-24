@@ -11,7 +11,7 @@ Item {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "STATS"
+            text: qsTr("STATS")
             color: Theme.textMuted
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
@@ -20,7 +20,7 @@ Item {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "Stats arrive in the next milestone"
+            text: qsTr("Stats arrive in the next milestone")
             color: Theme.textMuted
             font.family: Theme.bodyFamily
             font.pixelSize: Theme.bodySize

@@ -9,7 +9,7 @@ import Cadence.Theme
 Item {
     id: root
 
-    readonly property var dayNames: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+    readonly property var dayNames: Language.shortDayNames.map(name => name.toUpperCase())
     readonly property int rowStep: Theme.buttonHeightLarge + Theme.spacing8
     readonly property var block: TemplateEditor.block
     readonly property bool hasBlock: TemplateEditor.selectedBlock >= 0
@@ -94,19 +94,19 @@ Item {
 
             SignalButton {
                 anchors.bottom: parent.bottom
-                text: "Copy Mon to Tue-Fri"
+                text: qsTr("Copy Monday to Tuesday-Friday")
                 onClicked: TemplateEditor.copyMondayToWeekdays()
             }
 
             SignalButton {
                 anchors.bottom: parent.bottom
                 kind: "outline"
-                text: TemplateEditor.dayPlanned ? "Make free day" : "Plan this day"
+                text: TemplateEditor.dayPlanned ? qsTr("Make free day") : qsTr("Plan this day")
                 onClicked: TemplateEditor.setDayPlanned(!TemplateEditor.dayPlanned)
             }
 
             SignalField {
-                label: "Day start"
+                label: qsTr("Day start")
                 value: TemplateEditor.dayStartText
                 placeholder: "08:30"
                 visible: TemplateEditor.dayPlanned
@@ -115,7 +115,7 @@ Item {
             }
 
             SignalField {
-                label: "Cutoff"
+                label: qsTr("Cutoff")
                 value: TemplateEditor.dayCutoffText
                 placeholder: "23:00"
                 visible: TemplateEditor.dayPlanned
@@ -126,7 +126,7 @@ Item {
 
         Text {
             visible: !TemplateEditor.dayPlanned
-            text: "FREE DAY"
+            text: qsTr("FREE DAY")
             color: Theme.textMuted
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
@@ -265,7 +265,7 @@ Item {
 
                             Text {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: row.modelData.kind
+                                text: row.modelData.kindText
                                 color: Theme.textMuted
                                 font.family: Theme.bodyFamily
                                 font.weight: Theme.bodyWeightSemiBold
@@ -283,7 +283,7 @@ Item {
             id: addButton
 
             kind: "outline"
-            text: "+ Add block"
+            text: qsTr("+ Add block")
             visible: TemplateEditor.dayPlanned
             onClicked: TemplateEditor.addBlock()
         }
@@ -310,7 +310,7 @@ Item {
             spacing: Theme.spacing16
 
             Text {
-                text: root.hasBlock ? "BLOCK" : "NO BLOCK SELECTED"
+                text: root.hasBlock ? qsTr("BLOCK") : qsTr("NO BLOCK SELECTED")
                 color: Theme.textMuted
                 font.family: Theme.bodyFamily
                 font.weight: Theme.bodyWeightMedium
@@ -321,15 +321,16 @@ Item {
             SignalField {
                 width: parent.width
                 visible: root.hasBlock
-                label: "Name"
+                label: qsTr("Name")
                 value: root.hasBlock ? root.block.name : ""
                 onCommitted: function(text) { TemplateEditor.setBlockName(TemplateEditor.selectedBlock, text) }
             }
 
             SignalChoice {
                 visible: root.hasBlock
-                label: "Timing"
-                options: ["Flexible", "Anchored", "Soft"]
+                label: qsTr("Timing")
+                options: [qsTr("Flexible"), qsTr("Anchored"), qsTr("Soft")]
+                values: ["Flexible", "Anchored", "Soft"]
                 current: root.hasBlock ? root.block.kind : ""
                 onChosen: function(option) { TemplateEditor.setBlockKind(TemplateEditor.selectedBlock, option) }
             }
@@ -340,26 +341,26 @@ Item {
 
                 SignalField {
                     visible: root.hasBlock && root.block.kind !== "Flexible"
-                    label: root.hasBlock && root.block.kind === "Soft" ? "Earliest start" : "Start"
+                    label: root.hasBlock && root.block.kind === "Soft" ? qsTr("Earliest start") : qsTr("Start")
                     value: root.hasBlock ? root.block.startText : ""
                     placeholder: "09:00"
-                    error: root.blockIssues(TemplateEditor.selectedBlock).some(issue => issue.message.indexOf("start") >= 0)
+                    error: root.blockIssues(TemplateEditor.selectedBlock).some(issue => issue.field === "start")
                     onCommitted: function(text) { TemplateEditor.setBlockStart(TemplateEditor.selectedBlock, text) }
                 }
 
                 SignalField {
-                    label: "Duration (min)"
+                    label: qsTr("Duration (min)")
                     numeric: true
                     value: root.hasBlock && root.block.durationMinutes > 0 ? String(root.block.durationMinutes) : ""
-                    placeholder: root.hasBlock && root.block.pomodoroEnabled ? "from plan" : "60"
-                    error: root.blockIssues(TemplateEditor.selectedBlock).some(issue => issue.message.indexOf("duration") >= 0)
+                    placeholder: root.hasBlock && root.block.pomodoroEnabled ? qsTr("from plan") : "60"
+                    error: root.blockIssues(TemplateEditor.selectedBlock).some(issue => issue.field === "duration")
                     onCommitted: function(text) { TemplateEditor.setBlockDuration(TemplateEditor.selectedBlock, parseInt(text) || 0) }
                 }
             }
 
             SignalToggle {
                 visible: root.hasBlock
-                label: "Pomodoros"
+                label: qsTr("Pomodoros")
                 checked: root.hasBlock && root.block.pomodoroEnabled
                 onToggled: function(checked) { TemplateEditor.setBlockPomodoroEnabled(TemplateEditor.selectedBlock, checked) }
             }
@@ -369,15 +370,15 @@ Item {
                 visible: root.hasBlock && root.block.pomodoroEnabled
 
                 SignalField {
-                    label: "Count"
+                    label: qsTr("Count")
                     numeric: true
                     value: root.hasBlock && root.block.pomodoroCount > 0 ? String(root.block.pomodoroCount) : ""
-                    placeholder: root.hasBlock ? "fit " + root.block.resolvedCount : ""
+                    placeholder: root.hasBlock ? qsTr("fit %1").arg(root.block.resolvedCount) : ""
                     onCommitted: function(text) { TemplateEditor.setBlockPomodoroCount(TemplateEditor.selectedBlock, parseInt(text) || 0) }
                 }
 
                 SignalField {
-                    label: "Focus"
+                    label: qsTr("Focus")
                     numeric: true
                     value: root.hasBlock ? String(root.block.focus) : ""
                     onCommitted: function(text) { TemplateEditor.setBlockFocus(TemplateEditor.selectedBlock, parseInt(text) || 0) }
@@ -389,21 +390,21 @@ Item {
                 visible: root.hasBlock && root.block.pomodoroEnabled
 
                 SignalField {
-                    label: "Short break"
+                    label: qsTr("Short break")
                     numeric: true
                     value: root.hasBlock ? String(root.block.shortBreak) : ""
                     onCommitted: function(text) { TemplateEditor.setBlockShortBreak(TemplateEditor.selectedBlock, parseInt(text) || 0) }
                 }
 
                 SignalField {
-                    label: "Long break"
+                    label: qsTr("Long break")
                     numeric: true
                     value: root.hasBlock ? String(root.block.longBreak) : ""
                     onCommitted: function(text) { TemplateEditor.setBlockLongBreak(TemplateEditor.selectedBlock, parseInt(text) || 0) }
                 }
 
                 SignalField {
-                    label: "Long every"
+                    label: qsTr("Long every")
                     numeric: true
                     value: root.hasBlock ? String(root.block.longBreakEvery) : ""
                     onCommitted: function(text) { TemplateEditor.setBlockLongBreakEvery(TemplateEditor.selectedBlock, parseInt(text) || 0) }
@@ -412,14 +413,14 @@ Item {
 
             SignalToggle {
                 visible: root.hasBlock && root.block.pomodoroEnabled
-                label: "Push-ups on each break"
+                label: qsTr("Push-ups on each break")
                 checked: root.hasBlock && root.block.pushups
                 onToggled: function(checked) { TemplateEditor.setBlockPushups(TemplateEditor.selectedBlock, checked) }
             }
 
             SignalToggle {
                 visible: root.hasBlock
-                label: "Full-screen alarm at start"
+                label: qsTr("Full-screen alarm at start")
                 checked: root.hasBlock && root.block.fullscreenAlarm
                 onToggled: function(checked) { TemplateEditor.setBlockFullscreenAlarm(TemplateEditor.selectedBlock, checked) }
             }
@@ -442,8 +443,9 @@ Item {
                         required property var modelData
 
                         width: fields.width
-                        text: (issueText.modelData.block >= 0 ? "Block " + (issueText.modelData.block + 1) + ": " : "")
-                              + issueText.modelData.message
+                        text: issueText.modelData.block >= 0
+                              ? qsTr("Block %1: %2").arg(issueText.modelData.block + 1).arg(issueText.modelData.message)
+                              : issueText.modelData.message
                         color: Theme.alert
                         wrapMode: Text.Wrap
                         font.family: Theme.bodyFamily
@@ -453,7 +455,7 @@ Item {
 
                 Text {
                     visible: root.otherIssues > 0
-                    text: root.otherIssues === 1 ? "1 problem on another day" : root.otherIssues + " problems on other days"
+                    text: qsTr("%n problem(s) on other days", "", root.otherIssues)
                     color: Theme.alert
                     font.family: Theme.bodyFamily
                     font.pixelSize: Theme.labelSize
@@ -474,7 +476,7 @@ Item {
                 spacing: Theme.spacing12
 
                 SignalButton {
-                    text: "Save"
+                    text: qsTr("Save")
                     primary: true
                     enabled: TemplateEditor.dirty && TemplateEditor.valid
                     onClicked: TemplateEditor.save()
@@ -482,14 +484,14 @@ Item {
 
                 SignalButton {
                     kind: "outline"
-                    text: "Revert"
+                    text: qsTr("Revert")
                     enabled: TemplateEditor.dirty
                     onClicked: TemplateEditor.revert()
                 }
 
                 SignalButton {
                     kind: "outline"
-                    text: "Delete"
+                    text: qsTr("Delete")
                     textColor: Theme.alert
                     visible: root.hasBlock
                     onClicked: TemplateEditor.deleteBlock(TemplateEditor.selectedBlock)
@@ -498,7 +500,7 @@ Item {
 
             Text {
                 visible: !TemplateEditor.dirty
-                text: "Saved"
+                text: qsTr("Saved")
                 color: Theme.textMuted
                 font.family: Theme.bodyFamily
                 font.pixelSize: Theme.labelSize

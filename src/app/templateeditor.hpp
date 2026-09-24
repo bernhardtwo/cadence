@@ -56,6 +56,9 @@ public:
     QString error() const { return error_; }
     QStringList activityNames() const;
 
+    // The UI language changed; the issue list is worded again.
+    void retranslate();
+
     const cadence::core::TemplateDocument& document() const { return document_; }
 
     Q_INVOKABLE void selectDay(int day);
@@ -87,6 +90,8 @@ signals:
     void saved(const cadence::core::TemplateDocument& document);
 
 private:
+    static QString issueText(const cadence::core::ValidationIssue& issue);
+    static QString issueField(cadence::core::IssueCode code);
     struct FieldError {
         int day;
         int block;

@@ -24,7 +24,7 @@ Window {
     readonly property color inkMuted: overlay.onAccent ? Theme.textOnAccentMuted : Theme.textMuted
     readonly property color headlineColor: overlay.onAccent ? Theme.textOnAccent : Theme.accent
 
-    title: "Cadence Alarm"
+    title: qsTr("Cadence Alarm")
     color: overlay.onAccent ? Theme.accent : Theme.bg
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     // Not owned by the main window, so it shows even while that one hides in the tray.
@@ -87,10 +87,10 @@ Window {
             top: parent.top
             margins: Theme.spacing40
         }
-        text: overlay.mode === "break" ? "BREAK"
-            : overlay.mode === "done" ? "BLOCK DONE"
-            : overlay.mode === "blockStart" ? "BLOCK START"
-            : overlay.mode === "unconfirmed" ? "CONFIRM" : ""
+        text: overlay.mode === "break" ? qsTr("BREAK")
+            : overlay.mode === "done" ? qsTr("BLOCK DONE")
+            : overlay.mode === "blockStart" ? qsTr("BLOCK START")
+            : overlay.mode === "unconfirmed" ? qsTr("CONFIRM") : ""
         color: overlay.ink
         font.family: Theme.bodyFamily
         font.weight: Theme.bodyWeightSemiBold
@@ -132,7 +132,7 @@ Window {
 
         Text {
             width: parent.width
-            text: overlay.mode === "break" ? (overlay.showPushups ? "DROP AND GIVE ME" : "TAKE A BREAK") : overlay.headline
+            text: overlay.mode === "break" ? (overlay.showPushups ? qsTr("DROP AND GIVE ME") : qsTr("TAKE A BREAK")) : overlay.headline
             color: overlay.headlineColor
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -192,7 +192,7 @@ Window {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: overlay.mode === "break" && overlay.showPushups
-            text: "Today " + DayController.pushupsToday
+            text: qsTr("Today %1").arg(DayController.pushupsToday)
             color: overlay.inkMuted
             font.family: Theme.bodyFamily
             font.weight: Theme.bodyWeightMedium
@@ -209,7 +209,7 @@ Window {
                 visible: overlay.showPushups
                 kind: "dark"
                 display: true
-                text: "LOG SET"
+                text: qsTr("LOG SET")
                 width: Theme.buttonHeightLarge * 4
                 onClicked: { DayController.logPushups(overlay.reps); overlay.dismiss("log-set") }
             }
@@ -218,14 +218,14 @@ Window {
                 visible: !overlay.showPushups
                 kind: "dark"
                 display: true
-                text: "CONTINUE"
+                text: qsTr("CONTINUE")
                 width: Theme.buttonHeightLarge * 4
                 onClicked: overlay.dismiss("continue")
             }
 
             SignalButton {
                 kind: "outline"
-                text: overlay.showPushups ? "Skip" : "Skip break"
+                text: overlay.showPushups ? qsTr("Skip") : qsTr("Skip break")
                 implicitHeight: Theme.buttonHeightLarge
                 textColor: Theme.textOnAccent
                 outlineColor: Theme.textOnAccent
@@ -246,7 +246,7 @@ Window {
             visible: overlay.mode === "done"
 
             SignalButton {
-                text: "Continue"
+                text: qsTr("Continue")
                 primary: true
                 display: true
                 width: Theme.buttonHeightLarge * 4
@@ -260,7 +260,7 @@ Window {
             visible: overlay.mode === "blockStart"
 
             SignalButton {
-                text: "START"
+                text: qsTr("START")
                 primary: true
                 display: true
                 width: Theme.buttonHeightLarge * 4
@@ -269,7 +269,7 @@ Window {
 
             SignalButton {
                 kind: "outline"
-                text: "Snooze 5 min"
+                text: qsTr("Snooze 5 min")
                 implicitHeight: Theme.buttonHeightLarge
                 visible: DayController.canSnooze(overlay.blockIndex)
                 onClicked: { DayController.snooze(overlay.blockIndex); overlay.dismiss("snooze") }
@@ -277,7 +277,7 @@ Window {
 
             SignalButton {
                 kind: "outline"
-                text: "Skip"
+                text: qsTr("Skip")
                 implicitHeight: Theme.buttonHeightLarge
                 onClicked: { DayController.skip(); overlay.dismiss("skip-block") }
             }
@@ -289,7 +289,7 @@ Window {
             visible: overlay.mode === "unconfirmed"
 
             SignalButton {
-                text: "YES"
+                text: qsTr("YES")
                 primary: true
                 display: true
                 width: Theme.buttonHeightLarge * 3
@@ -298,7 +298,7 @@ Window {
 
             SignalButton {
                 kind: "outline"
-                text: "No"
+                text: qsTr("No")
                 implicitHeight: Theme.buttonHeightLarge
                 width: Theme.buttonHeightLarge * 3
                 onClicked: { DayController.confirm(overlay.blockIndex, false); overlay.dismiss("confirm-no") }
@@ -312,7 +312,7 @@ Window {
             bottom: parent.bottom
             bottomMargin: Theme.spacing40
         }
-        text: overlay.keysArmed ? "Esc to dismiss" : "Keys enabled in 2 s"
+        text: overlay.keysArmed ? qsTr("Esc to dismiss") : qsTr("Keys enabled in 2 s")
         color: overlay.inkMuted
         font.family: Theme.bodyFamily
         font.pixelSize: Theme.labelSize

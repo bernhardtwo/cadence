@@ -84,15 +84,15 @@ ApplicationWindow {
         function onAlarmRaised(kind, blockIndex, title, message) {
             if (kind === DayController.BlockStart) {
                 if (DayController.blockFullscreenAlarm(blockIndex)) {
-                    overlay.open("blockStart", blockIndex, title, DayController.currentStartText + " to " + DayController.currentEndText)
+                    overlay.open("blockStart", blockIndex, title, qsTr("%1 to %2").arg(DayController.currentStartText).arg(DayController.currentEndText))
                 }
             } else if (kind === DayController.PomodoroFocusEnd) {
                 const mode = DayController.pomodoroOnBreak ? "break" : "done"
-                overlay.open(mode, blockIndex, DayController.currentName, mode === "break" ? DayController.pomodoroPhase : "Last pomodoro finished")
+                overlay.open(mode, blockIndex, DayController.currentName, mode === "break" ? DayController.pomodoroPhaseText : qsTr("Last pomodoro finished"))
                 overlay.showPushups = mode === "break" && overlay.pushupsPending
                 overlay.pushupsPending = false
             } else if (kind === DayController.UnconfirmedPending) {
-                overlay.open("unconfirmed", blockIndex, title, "Did you do this?")
+                overlay.open("unconfirmed", blockIndex, title, qsTr("Did you do this?"))
             }
         }
     }
@@ -152,7 +152,7 @@ ApplicationWindow {
                 visible: root.currentScreen === 3
                 onChoosePlaylistRequested: function(activityId, activityName) {
                     picker.forActivity = activityId
-                    picker.show("Playlist for " + activityName)
+                    picker.show(qsTr("Playlist for %1").arg(activityName))
                 }
             }
         }
@@ -164,7 +164,7 @@ ApplicationWindow {
         onExitRequested: root.exitFocusMode()
         onPickPlaylistRequested: {
             picker.forActivity = ""
-            picker.show("Play a playlist")
+            picker.show(qsTr("Play a playlist"))
         }
     }
 

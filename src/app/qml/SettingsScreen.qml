@@ -60,11 +60,11 @@ Item {
                     spacing: Theme.spacing16
 
                     SectionTitle {
-                        text: "Startup"
+                        text: qsTr("Startup")
                     }
 
                     SignalToggle {
-                        label: "Launch at login"
+                        label: qsTr("Launch at login")
                         checked: Settings.launchAtLogin
                         onToggled: function (checked) {
                             Settings.launchAtLogin = checked;
@@ -72,7 +72,7 @@ Item {
                     }
 
                     SignalToggle {
-                        label: "Start minimized to tray"
+                        label: qsTr("Start minimized to tray")
                         checked: Settings.startMinimized
                         onToggled: function (checked) {
                             Settings.startMinimized = checked;
@@ -84,12 +84,13 @@ Item {
                     spacing: Theme.spacing16
 
                     SectionTitle {
-                        text: "Alarms"
+                        text: qsTr("Alarms")
                     }
 
                     SignalChoice {
-                        label: "Sound"
-                        options: ["Default", "Soft", "Silent"]
+                        label: qsTr("Sound")
+                        options: [qsTr("Default"), qsTr("Soft"), qsTr("Silent")]
+                        values: ["Default", "Soft", "Silent"]
                         current: Settings.sound
                         onChosen: function (option) {
                             Settings.sound = option;
@@ -97,7 +98,7 @@ Item {
                     }
 
                     SignalField {
-                        label: "Max snoozes per block"
+                        label: qsTr("Max snoozes per block")
                         numeric: true
                         value: String(Settings.maxSnoozes)
                         onCommitted: function (text) {
@@ -106,7 +107,7 @@ Item {
                     }
 
                     SignalToggle {
-                        label: "Warn when the day no longer fits"
+                        label: qsTr("Warn when the day no longer fits")
                         checked: Settings.warnDayNoLongerFits
                         onToggled: function (checked) {
                             Settings.warnDayNoLongerFits = checked;
@@ -118,11 +119,11 @@ Item {
                     spacing: Theme.spacing16
 
                     SectionTitle {
-                        text: "Push-ups"
+                        text: qsTr("Push-ups")
                     }
 
                     SignalField {
-                        label: "Default reps"
+                        label: qsTr("Default reps")
                         numeric: true
                         value: String(Settings.defaultReps)
                         onCommitted: function (text) {
@@ -158,7 +159,7 @@ Item {
                 spacing: Theme.spacing16
 
                 SectionTitle {
-                    text: "Music"
+                    text: qsTr("Music")
                 }
 
                 // Spotify card: the user's own app, the fixed redirect, the connection and the
@@ -196,7 +197,7 @@ Item {
                             spacing: Theme.spacing4
 
                             Repeater {
-                                model: ["1. Create an app at developer.spotify.com and select the Web API.", "2. Add exactly this redirect URI to the app: " + Spotify.redirectUri, "3. Paste the app's Client ID below. No client secret is needed.", "4. Connect and log in. Spotify Premium is required to control playback.", "5. Development Mode apps allow up to five users; each user registers their own app."]
+                                model: [qsTr("1. Create an app at developer.spotify.com and select the Web API."), qsTr("2. Add exactly this redirect URI to the app: %1").arg(Spotify.redirectUri), qsTr("3. Paste the app's Client ID below. No client secret is needed."), qsTr("4. Connect and log in. Spotify Premium is required to control playback."), qsTr("5. Development Mode apps allow up to five users; each user registers their own app.")]
 
                                 Text {
                                     id: guideLine
@@ -215,8 +216,8 @@ Item {
 
                         SignalField {
                             width: parent.width
-                            label: "Client ID"
-                            placeholder: "32 characters from your Spotify app"
+                            label: qsTr("Client ID")
+                            placeholder: qsTr("32 characters from your Spotify app")
                             value: Settings.spotifyClientId
                             onCommitted: function (text) {
                                 Settings.spotifyClientId = text;
@@ -231,7 +232,7 @@ Item {
                                 spacing: Theme.spacing4
 
                                 Text {
-                                    text: "REDIRECT URI"
+                                    text: qsTr("REDIRECT URI")
                                     color: Theme.textMuted
                                     font.family: Theme.bodyFamily
                                     font.weight: Theme.bodyWeightMedium
@@ -250,7 +251,7 @@ Item {
                             SignalButton {
                                 anchors.verticalCenter: parent.verticalCenter
                                 kind: "outline"
-                                text: "Copy"
+                                text: qsTr("Copy")
                                 onClicked: Spotify.copyToClipboard(Spotify.redirectUri)
                             }
                         }
@@ -259,7 +260,7 @@ Item {
                             spacing: Theme.spacing12
 
                             SignalButton {
-                                text: Spotify.connecting ? "Connecting" : "Connect"
+                                text: Spotify.connecting ? qsTr("Connecting") : qsTr("Connect")
                                 primary: true
                                 visible: !Spotify.connected
                                 enabled: Spotify.configured && !Spotify.connecting
@@ -268,13 +269,13 @@ Item {
 
                             SignalButton {
                                 kind: "outline"
-                                text: "Disconnect"
+                                text: qsTr("Disconnect")
                                 visible: Spotify.connected
                                 onClicked: Spotify.disconnectAccount()
                             }
 
                             SignalButton {
-                                text: "Reconnect to update permissions"
+                                text: qsTr("Reconnect to update permissions")
                                 primary: true
                                 visible: Spotify.connected && Spotify.needsReconsent
                                 onClicked: Spotify.connectAccount()
@@ -298,7 +299,7 @@ Item {
                             Text {
                                 width: parent.width
                                 visible: Spotify.premiumWarning
-                                text: "Spotify Premium is required to control playback"
+                                text: qsTr("Spotify Premium is required to control playback")
                                 color: Theme.alert
                                 wrapMode: Text.Wrap
                                 font.family: Theme.bodyFamily
@@ -318,7 +319,7 @@ Item {
                         }
 
                         SignalToggle {
-                            label: "Start the activity's playlist when its block starts"
+                            label: qsTr("Start the activity's playlist when its block starts")
                             checked: Settings.spotifyAutoplay
                             onToggled: function (checked) {
                                 Settings.spotifyAutoplay = checked;
@@ -326,7 +327,7 @@ Item {
                         }
 
                         Text {
-                            text: "DEFAULT PLAYLIST PER ACTIVITY"
+                            text: qsTr("DEFAULT PLAYLIST PER ACTIVITY")
                             color: Theme.textMuted
                             font.family: Theme.bodyFamily
                             font.weight: Theme.bodyWeightMedium
@@ -364,7 +365,7 @@ Item {
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: activityRow.width - Theme.fieldWidth - chooseButton.width - clearButton.width - Theme.spacing12 * 3
-                                        text: Settings.playlistNameFor(activityRow.modelData.id).length > 0 ? Settings.playlistNameFor(activityRow.modelData.id) : "None"
+                                        text: Settings.playlistNameFor(activityRow.modelData.id).length > 0 ? Settings.playlistNameFor(activityRow.modelData.id) : qsTr("None")
                                         color: Theme.textMuted
                                         elide: Text.ElideRight
                                         font.family: Theme.bodyFamily
@@ -374,7 +375,7 @@ Item {
                                     SignalButton {
                                         id: chooseButton
 
-                                        text: "Choose"
+                                        text: qsTr("Choose")
                                         enabled: Spotify.connected
                                         onClicked: root.choosePlaylistFor(activityRow.modelData.id, activityRow.modelData.name)
                                     }
@@ -383,7 +384,7 @@ Item {
                                         id: clearButton
 
                                         kind: "outline"
-                                        text: "Clear"
+                                        text: qsTr("Clear")
                                         enabled: Settings.playlistUriFor(activityRow.modelData.id).length > 0
                                         onClicked: Settings.clearPlaylistFor(activityRow.modelData.id)
                                     }

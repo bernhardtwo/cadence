@@ -12,8 +12,8 @@ using namespace Qt::StringLiterals;
 
 TrayController::TrayController(DayController& day, cadence::platform::Autostart& autostart, QObject* parent)
     : QObject(parent), day_(day), autostart_(autostart) {
-    showAction_ = menu_.addAction(u"Show Cadence"_s, this, &TrayController::showRequested);
-    toggleAction_ = menu_.addAction(u"Start"_s, this, [this] {
+    showAction_ = menu_.addAction(tr("Show Cadence"), this, &TrayController::showRequested);
+    toggleAction_ = menu_.addAction(tr("Start"), this, [this] {
         if (day_.canPause()) {
             day_.pause();
         } else if (day_.canResume()) {
@@ -22,15 +22,15 @@ TrayController::TrayController(DayController& day, cadence::platform::Autostart&
             day_.start();
         }
     });
-    finishAction_ = menu_.addAction(u"Finish block"_s, &day_, &DayController::finish);
-    skipAction_ = menu_.addAction(u"Skip block"_s, &day_, &DayController::skip);
+    finishAction_ = menu_.addAction(tr("Finish block"), &day_, &DayController::finish);
+    skipAction_ = menu_.addAction(tr("Skip block"), &day_, &DayController::skip);
     menu_.addSeparator();
-    autostartAction_ = menu_.addAction(u"Launch at login"_s);
+    autostartAction_ = menu_.addAction(tr("Launch at login"));
     autostartAction_->setCheckable(true);
     autostartAction_->setChecked(autostart_.isEnabled());
     connect(autostartAction_, &QAction::toggled, this, &TrayController::toggleAutostart);
     menu_.addSeparator();
-    quitAction_ = menu_.addAction(u"Quit"_s, this, &TrayController::quitRequested);
+    quitAction_ = menu_.addAction(tr("Quit"), this, &TrayController::quitRequested);
 
     tray_.setIcon(renderIcon());
     tray_.setContextMenu(&menu_);
@@ -51,7 +51,8 @@ bool TrayController::isAvailable() {
     return QSystemTrayIcon::isSystemTrayAvailable();
 }
 
-void TrayController::showMessage(const QString& title, const QString& message, QSystemTrayIcon::MessageIcon icon) {
+void TrayController::showMessage(const QString& title, const QString& message,
+                                 QSystemTrayIcon::MessageIcon icon) {
     tray_.showMessage(title, message, icon, 8000);
 }
 
@@ -59,17 +60,26 @@ void TrayController::refresh() {
     tray_.setToolTip(u"Cadence · %1 · %2"_s.arg(day_.currentName(), day_.remainingText()));
 
     if (day_.canPause()) {
-        toggleAction_->setText(u"Pause"_s);
+        toggleAction_->setText(tr("Pause"));
         toggleAction_->setEnabled(true);
     } else if (day_.canResume()) {
-        toggleAction_->setText(u"Resume"_s);
+        toggleAction_->setText(tr("Resume"));
         toggleAction_->setEnabled(true);
     } else {
-        toggleAction_->setText(u"Start"_s);
+        toggleAction_->setText(tr("Start"));
         toggleAction_->setEnabled(day_.canStart());
     }
     finishAction_->setEnabled(day_.canFinish());
     skipAction_->setEnabled(day_.canSkip());
+}
+
+void TrayController::retranslate() {
+    showAction_->setText(tr("Show Cadence"));
+    finishAction_->setText(tr("Finish block"));
+    skipAction_->setText(tr("Skip block"));
+    autostartAction_->setText(tr("Launch at login"));
+    quitAction_->setText(tr("Quit"));
+    refresh();
 }
 
 void TrayController::syncAutostart() {
@@ -82,7 +92,8 @@ void TrayController::toggleAutostart(bool enabled) {
         emit autostartChanged();
         return;
     }
-    showMessage(u"Launch at login"_s, u"Could not update %1"_s.arg(autostart_.location()), QSystemTrayIcon::Warning);
+    showMessage(tr("Launch at login"), tr("Could not update %1").arg(autostart_.location()),
+                QSystemTrayIcon::Warning);
     const QSignalBlocker blocker(autostartAction_);
     autostartAction_->setChecked(autostart_.isEnabled());
 }

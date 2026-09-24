@@ -36,6 +36,18 @@ QString kindName(BlockKind kind) {
     return {};
 }
 
+QString kindLabel(BlockKind kind) {
+    switch (kind) {
+    case BlockKind::Anchored:
+        return TemplateEditor::tr("Anchored");
+    case BlockKind::Flexible:
+        return TemplateEditor::tr("Flexible");
+    case BlockKind::Soft:
+        return TemplateEditor::tr("Soft");
+    }
+    return {};
+}
+
 std::optional<BlockKind> parseKind(const QString& text) {
     const QString lower = text.toLower();
     if (lower == u"anchored"_s) {
@@ -148,6 +160,76 @@ void TemplateEditor::touch() {
     revalidate();
 }
 
+// The user's wording of a core issue; core keeps the English message for the command line.
+QString TemplateEditor::issueText(const ValidationIssue& issue) {
+    const auto arg = [&issue](std::size_t index) {
+        return index < issue.args.size() ? QString::fromStdString(issue.args[index]) : QString();
+    };
+    switch (issue.code) {
+    case IssueCode::UnknownActivity:
+        return tr("unknown activity id \"%1\"").arg(arg(0));
+    case IssueCode::StartRequired: {
+        const auto kind = parseKind(arg(0));
+        return tr("%1 blocks need a start time").arg(kind ? kindLabel(*kind).toLower() : arg(0));
+    }
+    case IssueCode::StartNotAllowed:
+        return tr("flexible blocks are placed in sequence and do not take a start time");
+    case IssueCode::StartOutOfRange:
+        return tr("start must lie between 00:00 and 23:59");
+    case IssueCode::DurationNotPositive:
+        return tr("duration must be greater than zero");
+    case IssueCode::FocusNotPositive:
+        return tr("pomodoro focus must be greater than zero");
+    case IssueCode::BreakNegative:
+        return tr("pomodoro breaks cannot be negative");
+    case IssueCode::LongBreakEveryNegative:
+        return tr("the long break interval cannot be negative");
+    case IssueCode::CountNotPositive:
+        return tr("pomodoro count must be greater than zero");
+    case IssueCode::DurationMissing:
+        return tr("a block needs a duration or a pomodoro plan with a count");
+    case IssueCode::ZeroResolvedDuration:
+        return tr("the pomodoro plan resolves to a zero duration");
+    case IssueCode::CrossesMidnight:
+        return tr("block crosses midnight (%1 plus %2 minutes)").arg(arg(0), arg(1));
+    case IssueCode::DayStartOutOfRange:
+        return tr("day start must lie between 00:00 and 23:59");
+    case IssueCode::DayCutoffOutOfRange:
+        return tr("cutoff must lie between 00:00 and 23:59");
+    case IssueCode::CutoffBeforeStart:
+        return tr("cutoff must be later than the day start");
+    case IssueCode::AnchoredOverlap:
+        return tr("anchored block overlaps block %1 (%2 to %3)").arg(arg(0).toInt() + 1).arg(arg(1), arg(2));
+    case IssueCode::ActivityIdEmpty:
+        return tr("activity id cannot be empty");
+    case IssueCode::DuplicateActivity:
+        return tr("duplicate activity id \"%1\"").arg(arg(0));
+    case IssueCode::BadColor:
+        return tr("expected a color formatted as #RRGGBB");
+    }
+    return QString::fromStdString(issue.message);
+}
+
+// Which field of the block panel an issue belongs to, so the panel can mark it.
+QString TemplateEditor::issueField(IssueCode code) {
+    switch (code) {
+    case IssueCode::StartRequired:
+    case IssueCode::StartNotAllowed:
+    case IssueCode::StartOutOfRange:
+        return u"start"_s;
+    case IssueCode::DurationNotPositive:
+    case IssueCode::DurationMissing:
+    case IssueCode::ZeroResolvedDuration:
+        return u"duration"_s;
+    default:
+        return {};
+    }
+}
+
+void TemplateEditor::retranslate() {
+    revalidate();
+}
+
 void TemplateEditor::revalidate() {
     issues_.clear();
     std::vector<ValidationIssue> found = validate(document_);
@@ -155,7 +237,8 @@ void TemplateEditor::revalidate() {
         const auto [day, block] = locate(QString::fromStdString(issue.location));
         QVariantMap row;
         row[u"location"_s] = QString::fromStdString(issue.location);
-        row[u"message"_s] = QString::fromStdString(issue.message);
+        row[u"message"_s] = issueText(issue);
+        row[u"field"_s] = issueField(issue.code);
         row[u"day"_s] = day;
         row[u"block"_s] = block;
         issues_.push_back(row);
@@ -184,6 +267,7 @@ void TemplateEditor::revalidate() {
         QVariantMap row;
         row[u"location"_s] = key;
         row[u"message"_s] = fieldError.message;
+        row[u"field"_s] = key.section(u':', 2);
         row[u"day"_s] = fieldError.day;
         row[u"block"_s] = fieldError.block;
         issues_.push_back(row);
@@ -298,6 +382,7 @@ QVariantList TemplateEditor::blocks() const {
         row[u"index"_s] = static_cast<int>(i);
         row[u"name"_s] = activityName(block.activityId);
         row[u"kind"_s] = kindName(block.kind);
+        row[u"kindText"_s] = kindLabel(block.kind);
         row[u"startText"_s] = timeText(block.start);
         row[u"durationMinutes"_s] = block.durationMinutes ? minutesOf(*block.durationMinutes) : 0;
         row[u"pomodoroEnabled"_s] = block.pomodoro.has_value();
@@ -313,14 +398,14 @@ QVariantList TemplateEditor::blocks() const {
 
         QStringList detail;
         if (const auto duration = resolvedDuration(block)) {
-            detail.push_back(u"%1 min"_s.arg(minutesOf(*duration)));
+            detail.push_back(tr("%1 min").arg(minutesOf(*duration)));
         }
         if (const auto count = resolvedPomodoroCount(block); count && *count > 0) {
-            detail.push_back(*count == 1 ? u"1 pomodoro"_s : u"%1 pomodoros"_s.arg(*count));
+            detail.push_back(tr("%n pomodoro(s)", nullptr, *count));
         }
         if (block.start && block.kind != BlockKind::Flexible) {
-            detail.push_back((block.kind == BlockKind::Anchored ? u"at "_s : u"from "_s) +
-                             timeText(block.start));
+            detail.push_back(block.kind == BlockKind::Anchored ? tr("at %1").arg(timeText(block.start))
+                                                               : tr("from %1").arg(timeText(block.start)));
         }
         row[u"detail"_s] = detail.join(u" · "_s);
         list.push_back(row);
@@ -338,6 +423,7 @@ QVariantMap TemplateEditor::block() const {
     empty[u"index"_s] = -1;
     empty[u"name"_s] = QString();
     empty[u"kind"_s] = QString();
+    empty[u"kindText"_s] = QString();
     empty[u"startText"_s] = QString();
     empty[u"durationMinutes"_s] = 0;
     empty[u"pomodoroEnabled"_s] = false;
@@ -392,7 +478,7 @@ void TemplateEditor::setDayStart(const QString& text) {
         return;
     }
     const auto parsed = parseTimeOfDay(text.trimmed().toStdString());
-    setFieldError(-1, u"dayStart"_s, parsed ? QString() : u"day start must be a time like 08:30"_s);
+    setFieldError(-1, u"dayStart"_s, parsed ? QString() : tr("day start must be a time like 08:30"));
     if (parsed) {
         day->dayStart = *parsed;
     }
@@ -405,7 +491,7 @@ void TemplateEditor::setDayCutoff(const QString& text) {
         return;
     }
     const auto parsed = parseTimeOfDay(text.trimmed().toStdString());
-    setFieldError(-1, u"dayCutoff"_s, parsed ? QString() : u"day cutoff must be a time like 23:00"_s);
+    setFieldError(-1, u"dayCutoff"_s, parsed ? QString() : tr("day cutoff must be a time like 23:00"));
     if (parsed) {
         day->dayCutoff = *parsed;
     }
@@ -431,7 +517,7 @@ void TemplateEditor::addBlock() {
         return;
     }
     BlockTemplate block;
-    block.activityId = activityFor(u"New block"_s);
+    block.activityId = activityFor(tr("New block"));
     block.kind = BlockKind::Flexible;
     block.durationMinutes = Minutes{30};
     day->blocks.push_back(block);
@@ -541,7 +627,7 @@ void TemplateEditor::setBlockStart(int index, const QString& text) {
         block->start = *parsed;
         setFieldError(index, u"start"_s, {});
     } else {
-        setFieldError(index, u"start"_s, u"start must be a time like 09:30"_s);
+        setFieldError(index, u"start"_s, tr("start must be a time like 09:30"));
     }
     touch();
 }
@@ -632,7 +718,7 @@ bool TemplateEditor::save() {
     error_.clear();
     revalidate();
     if (!issues_.isEmpty()) {
-        error_ = u"Fix the problems above before saving"_s;
+        error_ = tr("Fix the problems above before saving");
         emit changed();
         return false;
     }

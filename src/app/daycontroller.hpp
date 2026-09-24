@@ -47,6 +47,8 @@ class DayController : public QObject {
     Q_PROPERTY(int pomodoroIndex READ pomodoroIndex NOTIFY changed)
     Q_PROPERTY(int pomodoroTotal READ pomodoroTotal NOTIFY changed)
     Q_PROPERTY(QString pomodoroPhase READ pomodoroPhase NOTIFY changed)
+    // The phase worded for the user; pomodoroPhase stays a key for comparisons and the log.
+    Q_PROPERTY(QString pomodoroPhaseText READ pomodoroPhaseText NOTIFY changed)
     Q_PROPERTY(int pomodoroRemainingSeconds READ pomodoroRemainingSeconds NOTIFY changed)
     Q_PROPERTY(int pomodorosDone READ pomodorosDone NOTIFY changed)
     Q_PROPERTY(int pomodoroPhaseSeconds READ pomodoroPhaseSeconds NOTIFY changed)
@@ -123,6 +125,7 @@ public:
     int pomodoroIndex() const;
     int pomodoroTotal() const;
     QString pomodoroPhase() const;
+    QString pomodoroPhaseText() const;
     int pomodoroRemainingSeconds() const;
     int pomodorosDone() const;
     int pomodoroPhaseSeconds() const;

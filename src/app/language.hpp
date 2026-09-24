@@ -19,6 +19,8 @@ class LanguageManager : public QObject {
     // What "system" resolves to on this machine.
     Q_PROPERTY(QString systemLanguage READ systemLanguage CONSTANT)
     Q_PROPERTY(QStringList codes READ codes CONSTANT)
+    // Monday to Sunday, short form, in the current language.
+    Q_PROPERTY(QStringList shortDayNames READ shortDayNames NOTIFY changed)
 
 public:
     explicit LanguageManager(QObject* parent = nullptr);
@@ -37,6 +39,7 @@ public:
     QString current() const { return current_; }
     QString systemLanguage() const;
     QStringList codes() const;
+    QStringList shortDayNames() const;
 
     // The language's own name, capitalized: English, Español, Français.
     Q_INVOKABLE QString nativeName(const QString& code) const;

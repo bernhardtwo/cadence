@@ -98,7 +98,7 @@ void SpotifyAuth::configureFlow() {
             onFailed(u"network error while talking to Spotify"_s);
             break;
         case QAbstractOAuth::Error::ServerError:
-            onFailed(u"Spotify refused the request"_s);
+            onFailed(tr("Spotify refused the request"));
             break;
         case QAbstractOAuth::Error::OAuthTokenNotFoundError:
         case QAbstractOAuth::Error::OAuthTokenSecretNotFoundError:
@@ -151,7 +151,7 @@ void SpotifyAuth::setNeedsReconsent(bool needs) {
 
 void SpotifyAuth::connectAccount() {
     if (clientId_.isEmpty()) {
-        setError(u"Paste the Client ID of your Spotify app first"_s);
+        setError(tr("Paste the Client ID of your Spotify app first"));
         setState(State::Error);
         return;
     }
@@ -165,7 +165,7 @@ void SpotifyAuth::connectAccount() {
     if (!handler_->isListening()) {
         delete handler_;
         handler_ = nullptr;
-        setError(u"Port %1 is in use by another program. Close it and try again."_s.arg(redirectPort));
+        setError(tr("Port %1 is in use by another program. Close it and try again.").arg(redirectPort));
         setState(State::Error);
         emit logMessage(u"spotify connect failed: redirect port busy"_s);
         return;
@@ -329,7 +329,7 @@ void SpotifyAuth::storeCredentials() {
     connect(job, &QKeychain::Job::finished, this, [this, job] {
         if (job->error() != QKeychain::NoError) {
             emit logMessage(u"spotify credential store write failed: "_s + job->errorString());
-            setError(u"Could not save the login in the credential store: "_s + job->errorString());
+            setError(tr("Could not save the login in the credential store: %1").arg(job->errorString()));
         }
     });
     job->start();

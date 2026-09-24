@@ -81,7 +81,7 @@ qt_add_translations(cadence
     TS_FILE_BASE cadence
     TS_FILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/translations"
     RESOURCE_PREFIX "/i18n"
-    SOURCE_TARGETS cadence
+    SOURCE_TARGETS cadence cadence_spotify
     LUPDATE_OPTIONS -no-obsolete -locations none)
 
 qt_add_resources(cadence "cadence_fonts"

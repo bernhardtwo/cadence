@@ -9,7 +9,7 @@ Rectangle {
     id: root
 
     property bool open: false
-    property string title: "Choose a playlist"
+    property string title: qsTr("Choose a playlist")
     property string query: ""
 
     signal chosen(string uri, string name)
@@ -85,8 +85,8 @@ Rectangle {
                 id: search
 
                 width: parent.width
-                label: "Search"
-                placeholder: "Type to filter"
+                label: qsTr("Search")
+                placeholder: qsTr("Type to filter")
                 value: root.query
                 onTextChanged: root.query = search.text
             }
@@ -175,7 +175,7 @@ Rectangle {
                 Text {
                     anchors.centerIn: parent
                     visible: list.count === 0
-                    text: Spotify.playlistsLoading ? "Loading" : Spotify.connected ? "No playlists" : "Not connected"
+                    text: Spotify.playlistsLoading ? qsTr("Loading") : Spotify.connected ? qsTr("No playlists") : qsTr("Not connected")
                     color: Theme.textMuted
                     font.family: Theme.bodyFamily
                     font.pixelSize: Theme.bodySize
@@ -188,20 +188,20 @@ Rectangle {
                 spacing: Theme.spacing12
 
                 SignalButton {
-                    text: Spotify.playlistsLoading ? "Loading" : "Load more"
+                    text: Spotify.playlistsLoading ? qsTr("Loading") : qsTr("Load more")
                     enabled: Spotify.playlistsHasMore && !Spotify.playlistsLoading
                     onClicked: Spotify.loadPlaylists(false)
                 }
 
                 SignalButton {
                     kind: "outline"
-                    text: "Close · Esc"
+                    text: qsTr("Close · Esc")
                     onClicked: root.close()
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Spotify.playlists.length + " loaded"
+                    text: qsTr("%n loaded", "", Spotify.playlists.length)
                     color: Theme.textMuted
                     font.family: Theme.bodyFamily
                     font.pixelSize: Theme.labelSize

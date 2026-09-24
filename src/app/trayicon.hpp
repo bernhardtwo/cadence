@@ -27,6 +27,9 @@ public:
     // The settings screen changed launch at login; the menu entry follows.
     void syncAutostart();
 
+    // The UI language changed; every label is worded again.
+    void retranslate();
+
 signals:
     void showRequested();
     void quitRequested();
