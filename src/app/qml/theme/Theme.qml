@@ -57,7 +57,8 @@ QtObject {
     readonly property real quoteLineHeightOverlay: 1.25
     readonly property int quoteMaxWidthCard: 520
     readonly property int quoteMaxWidthFocus: 640
-    readonly property int quoteMinWidth: 240
+    // The overlay quote slot, left of the centered stack, never narrower than this.
+    readonly property int quoteMinWidth: 280
     readonly property int quoteGapFocus: 36
 
     // Shape and spacing

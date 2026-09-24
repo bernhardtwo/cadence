@@ -34,6 +34,12 @@ Latin originals; do not paste a modern copyrighted translation. In French, put a
    quote that does not fit its slot is skipped for the next one of its group, so a long quote may
    simply never appear on the Today card; keep them short.
 
+On the overlays the quote sits bottom left, level with the bottom of the centered stack, in a
+slot that runs from the window margin to the stack's widest visible item. The headline is capped
+at the window width minus two slots and their margins (`Theme.quoteMinWidth`, 280, plus 40 on
+each side) and shrinks to fit two lines within that, so the slot keeps at least 280 in every
+language and at every overlay size; a slot narrower than that hides the quote instead.
+
 The original line is drawn in Noto Serif Italic, subset to Latin, Greek and Greek Extended under
 `src/app/fonts/NotoSerif`. Check that every character of a new original exists in that subset.
 

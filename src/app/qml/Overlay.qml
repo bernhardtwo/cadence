@@ -20,6 +20,8 @@ Window {
     readonly property int armDelayMs: 2000
 
     readonly property bool onAccent: overlay.mode === "break"
+    // Widest the headline may run while the quote slot on its left keeps its minimum width.
+    readonly property int headlineMaxWidth: overlay.width - (Theme.spacing40 * 2 + Theme.quoteMinWidth) * 2
     readonly property color ink: overlay.onAccent ? Theme.textOnAccent : Theme.text
     readonly property color inkMuted: overlay.onAccent ? Theme.textOnAccentMuted : Theme.textMuted
     readonly property color headlineColor: overlay.onAccent ? Theme.textOnAccent : Theme.accent
@@ -177,7 +179,15 @@ Window {
         Text {
             id: headlineText
 
-            width: parent.width
+            // The largest size the headline may take: the break wording has a fixed size, a
+            // block name scales with the screen.
+            readonly property int maxSize: overlay.mode === "break" ? Theme.overlayHeadlineSize
+                : Math.min(Theme.timerSizeMax, Math.max(Theme.timerSizeMin, Math.round(overlay.height * 0.3)))
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            // Narrower than the stack so the quote keeps its slot: every headline, the fixed
+            // break one included, shrinks to fit this width.
+            width: Math.min(parent.width, overlay.headlineMaxWidth)
             text: overlay.mode === "break" ? (overlay.showPushups ? qsTr("DROP AND GIVE ME") : qsTr("TAKE A BREAK")) : overlay.headline
             // A block name is user content of any length: the headline shrinks until it fits two
             // lines within half the screen. The break headline gets one line of its own size; a
@@ -190,12 +200,53 @@ Window {
             wrapMode: Text.Wrap
             maximumLineCount: 2
             elide: Text.ElideRight
-            fontSizeMode: Text.Fit
-            minimumPixelSize: Theme.headingSizeMax
             font.family: Theme.displayFamily
             font.weight: Theme.displayWeightExtraBold
-            font.pixelSize: overlay.mode === "break" ? Theme.overlayHeadlineSize
-                          : Math.min(Theme.timerSizeMax, Math.max(Theme.timerSizeMin, Math.round(overlay.height * 0.3)))
+            font.capitalization: Font.AllUppercase
+
+            // Text.Fit stops once two lines fit the height and lets a long word elide, so the
+            // size is searched with a probe instead: the largest one at which nothing is cut.
+            function refit() {
+                const fits = function(size) {
+                    headlineProbe.font.pixelSize = size
+                    return !headlineProbe.truncated && headlineProbe.contentWidth <= headlineProbe.width
+                           && headlineProbe.contentHeight <= headlineProbe.height
+                }
+                headlineProbe.width = headlineText.width
+                headlineProbe.height = headlineText.height
+                headlineProbe.text = headlineText.text
+                let low = Theme.headingSizeMax
+                let high = headlineText.maxSize
+                if (fits(high)) {
+                    low = high
+                }
+                while (high - low > 1) {
+                    const middle = Math.floor((low + high) / 2)
+                    if (fits(middle)) {
+                        low = middle
+                    } else {
+                        high = middle
+                    }
+                }
+                headlineText.font.pixelSize = low
+            }
+
+            onTextChanged: headlineText.refit()
+            onWidthChanged: headlineText.refit()
+            onHeightChanged: headlineText.refit()
+            onMaxSizeChanged: headlineText.refit()
+            Component.onCompleted: headlineText.refit()
+        }
+
+        Text {
+            id: headlineProbe
+
+            visible: false
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
+            elide: Text.ElideRight
+            font.family: Theme.displayFamily
+            font.weight: Theme.displayWeightExtraBold
             font.capitalization: Font.AllUppercase
         }
 
