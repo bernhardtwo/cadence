@@ -22,6 +22,40 @@ Before opening a pull request make sure:
 
 CI runs the release preset on Windows, Linux and macOS for every push and pull request.
 
+### Before pushing from Windows: the core library under GCC
+
+MSVC accepts a few things GCC and Clang reject (a missing field initializer under `-Wextra`, a
+forward declaration inside a namespace), and Linux CI is where that surfaces. Before pushing,
+compile the core library and its tests with GCC and the CI flags in WSL. No CMake or Ninja is
+needed there: the sources are compiled directly, with the nlohmann JSON headers and the Catch2
+amalgamated sources that the Windows configure step fetched under `build/windows-msvc-debug/_deps`.
+
+```sh
+REPO=/mnt/c/Users/<you>/projects/cadence
+DEPS=$REPO/build/windows-msvc-debug/_deps
+OUT=$HOME/cadence-gcc && mkdir -p $OUT/core $OUT/tests $OUT/include/catch2/matchers
+for h in catch2/catch_test_macros.hpp catch2/matchers/catch_matchers_string.hpp; do
+  echo '#include <catch_amalgamated.hpp>' > $OUT/include/$h
+done
+for f in $REPO/src/core/src/*.cpp; do
+  g++ -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Werror \
+    -I$REPO/src/core/include -isystem $DEPS/nlohmann_json-src/include \
+    -DCADENCE_VERSION_MAJOR=0 -DCADENCE_VERSION_MINOR=1 -DCADENCE_VERSION_PATCH=0 \
+    -DCADENCE_VERSION_STRING='"0.1.0"' -c $f -o $OUT/core/$(basename $f .cpp).o
+done
+g++ -std=c++20 -O1 -c $DEPS/catch2-src/extras/catch_amalgamated.cpp -o $OUT/tests/catch_amalgamated.o
+for f in $REPO/tests/core/*.cpp; do
+  g++ -std=c++20 -I$REPO/src/core/include -isystem $OUT/include -isystem $DEPS/catch2-src/extras \
+    -DCADENCE_EXPECTED_VERSION='"0.1.0"' -DCADENCE_RESOURCES_DIR="\"$REPO/resources\"" \
+    -c $f -o $OUT/tests/$(basename $f .cpp).o
+done
+g++ $OUT/core/*.o $OUT/tests/*.o -o $OUT/cadence_core_tests && $OUT/cadence_core_tests
+```
+
+The version numbers are the ones in the root `CMakeLists.txt`. The test headers are included by
+their per-header Catch2 names, so two one-line shims forward them to the amalgamated header. The
+core library must compile without a single warning and every test must pass before the push.
+
 ### Trying the app against a test day
 
 Debug builds read two environment variables so a test session never touches your real template or

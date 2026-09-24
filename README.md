@@ -31,6 +31,10 @@ and `docs/quotes.md`.
 - Settings live next to it in `settings.json`.
 - Progress is written per day under the app data location, in `progress/YYYY-MM-DD.json`,
   including every pomodoro phase, so a restart resumes the running phase where it was.
+- A block skipped by mistake shows Restore in the Today list while restoring still makes
+  sense: an anchored block until its end, the others until the day cutoff. An anchored block
+  continues from the current time with a pomodoro plan sized for what is left; a flexible block
+  goes back to the queue. The time it spent skipped never counts as work.
 - A daily log of alarms, overlays and push-up sets lives next to it in `logs/YYYY-MM-DD.log`,
   kept for 14 days.
 - Closing the window hides Cadence to the tray; Quit in the tray menu exits.
