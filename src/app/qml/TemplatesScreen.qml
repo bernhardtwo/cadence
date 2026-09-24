@@ -481,7 +481,9 @@ Item {
                 }
             }
 
-            Row {
+            // Wraps: the French Revert label alone takes more than half the panel.
+            Flow {
+                width: parent.width
                 spacing: Theme.spacing12
 
                 SignalButton {

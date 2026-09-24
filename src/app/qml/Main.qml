@@ -14,8 +14,11 @@ ApplicationWindow {
 
     width: 1280
     height: 800
-    minimumWidth: 640
-    minimumHeight: 480
+    // The layouts are fixed: the French Templates header row fills the whole left column at
+    // 1280 and the Today side column needs 600 for three rows of pomodoros. Nothing adapts below
+    // that; see docs/follow-ups.md.
+    minimumWidth: 1280
+    minimumHeight: 600
     visible: true
     title: "Cadence"
     color: Theme.bg
