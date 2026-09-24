@@ -6,6 +6,7 @@
 #include <cadence/core/clock.hpp>
 #include <cadence/core/planner.hpp>
 #include <cadence/core/pomodoro.hpp>
+#include <cadence/core/restore.hpp>
 #include <cadence/core/summary.hpp>
 #include <cadence/core/template_json.hpp>
 
@@ -158,6 +159,9 @@ public:
     Q_INVOKABLE void extend(int minutes);
     Q_INVOKABLE void finish();
     Q_INVOKABLE void confirm(int blockIndex, bool happened);
+    // Takes a skip back; see cadence/core/restore.hpp for what each block kind does.
+    Q_INVOKABLE void restore(int blockIndex);
+    Q_INVOKABLE bool canRestore(int blockIndex) const;
     Q_INVOKABLE void logPushups(int reps);
     // The user closed the push-up prompt without logging a set.
     Q_INVOKABLE void dismissPrompt();
@@ -178,6 +182,9 @@ signals:
     void blockStarted(int blockIndex, const QString& activityId);
     // A restart rebuilt a running pomodoro session from the progress file.
     void sessionRestored(int blockIndex, const QString& phase, int remainingSeconds);
+    // The user restored a skipped block and it runs again from now. A time tracking integration
+    // (Clockify, milestone 8) starts its new entry from here, the way music starts from blockStarted.
+    void blockRestored(int blockIndex, const QString& activityId);
 
 private:
     // withAlarms is false for the constructor's pass, which runs before anything listens.
@@ -199,6 +206,8 @@ private:
     static QString formatDuration(int seconds);
     static QString formatClock(int minutes);
     QString blockDetail(std::size_t index, const cadence::core::PlannedBlock& planned) const;
+    QString skippedAtText(std::size_t index) const;
+    QString restoreCaption(std::size_t index) const;
     cadence::core::ActivitySummary summary() const;
 
     std::unique_ptr<cadence::core::IClock> clock_;

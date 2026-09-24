@@ -282,7 +282,8 @@ void DayController::restoreSession(Instant now) {
     if (tpl == nullptr || prog == nullptr || prog->phases.empty() || !date_) {
         return;
     }
-    if (auto session = PomodoroSession::restore(*tpl, prog->phases, std::chrono::local_days{*date_})) {
+    if (auto session =
+            PomodoroSession::restore(*tpl, prog->phases, std::chrono::local_days{*date_}, prog->pomodoroCount)) {
         session_ = std::move(session);
         sessionBlock_ = *running;
         restored_ = Restored{static_cast<int>(*running), phaseName(session_->activePhase()),
@@ -492,6 +493,79 @@ QString DayController::blockDetail(std::size_t index, const PlannedBlock& planne
         parts.push_back(tr("push-ups"));
     }
     return parts.join(u" · "_s);
+}
+
+QString DayController::skippedAtText(std::size_t index) const {
+    const BlockProgress* prog = progress_.find(index);
+    if (prog == nullptr || !prog->skipped || prog->skips.empty()) {
+        return {};
+    }
+    return timeText(prog->skips.back().at);
+}
+
+// The caption of a skipped row: what restoring would do, worked out by rehearsing the restore on a
+// copy of the progress, or why it is no longer possible.
+QString DayController::restoreCaption(std::size_t index) const {
+    const BlockTemplate* tpl = block(index);
+    const BlockProgress* prog = progress_.find(index);
+    if (tpl == nullptr || prog == nullptr || !day_ || !(prog->skipped || prog->confirmed == false)) {
+        return {};
+    }
+    DayProgress trial = progress_;
+    const std::optional<RestoreResult> result = restoreBlock(*day_, trial, index, now_);
+    if (!result) {
+        return tr("window closed");
+    }
+    const DayPlan planned = plan(*day_, trial, toTimePoint(now_));
+    const PlannedBlock& mine = planned.at(index);
+    const QString skippedAt = skippedAtText(index);
+    const Minutes now = nowMinute();
+
+    if (tpl->kind == BlockKind::Anchored) {
+        const QString start = timeText(mine.start);
+        const QString end = timeText(mine.end);
+        if (now < mine.start) {
+            return tr("%1 to %2 · restoring puts it back at its time.").arg(start, end);
+        }
+        const QString done = formatClock(static_cast<int>(workedMinutes(mine, trial.find(index), now).count()));
+        const QString left = formatClock(static_cast<int>(std::max(Minutes{0}, mine.end - now).count()));
+        const int count = result->pomodoroCount.value_or(0);
+        if (count > 0) {
+            return tr("%1 to %2 · %3 done · restoring continues at the current time with %4 left, %n pomodoro(s).",
+                      nullptr, count)
+                .arg(start, end, done, left);
+        }
+        return tr("%1 to %2 · %3 done · restoring continues at the current time with %4 left.")
+            .arg(start, end, done, left);
+    }
+
+    if (tpl->kind == BlockKind::Soft) {
+        return skippedAt.isEmpty() ? tr("Soft, restoring re-arms the reminder.")
+                                   : tr("Skipped at %1 · soft, restoring re-arms the reminder.").arg(skippedAt);
+    }
+
+    // The block scheduled right before it in the queue, if any.
+    std::optional<std::size_t> before;
+    for (const PlannedBlock& other : planned.blocks) {
+        const BlockTemplate* otherTpl = block(other.templateIndex);
+        if (other.templateIndex == index || otherTpl == nullptr || otherTpl->kind == BlockKind::Soft ||
+            other.state == BlockState::Skipped || other.end > mine.start) {
+            continue;
+        }
+        if (!before || other.end > planned.at(*before).end ||
+            (other.end == planned.at(*before).end && other.start > planned.at(*before).start)) {
+            before = other.templateIndex;
+        }
+    }
+    if (before) {
+        const QString name = blockName(static_cast<int>(*before));
+        return skippedAt.isEmpty()
+                   ? tr("Flexible, restoring puts it back in the queue after %1.").arg(name)
+                   : tr("Skipped at %1 · flexible, restoring puts it back in the queue after %2.").arg(skippedAt, name);
+    }
+    return skippedAt.isEmpty()
+               ? tr("Flexible, restoring puts it back at the front of the queue.")
+               : tr("Skipped at %1 · flexible, restoring puts it back at the front of the queue.").arg(skippedAt);
 }
 
 QString DayController::dateText() const {
@@ -763,6 +837,9 @@ QVariantList DayController::planList() const {
         row[u"pushups"_s] = tpl->pushupsOnBreak;
         row[u"detail"_s] = blockDetail(planned.templateIndex, planned);
         row[u"color"_s] = activityColor(tpl->activityId);
+        row[u"restorable"_s] = canRestore(static_cast<int>(planned.templateIndex));
+        row[u"skippedAt"_s] = skippedAtText(planned.templateIndex);
+        row[u"restoreCaption"_s] = restoreCaption(planned.templateIndex);
         list.push_back(row);
     }
     return list;
@@ -884,12 +961,10 @@ void DayController::skip() {
         return;
     }
     const std::size_t index = *current_;
-    if (runningIndex() == index) {
-        closeOpenPause(nowMinute());
-        cadence::core::closeOpenPhase(progress_.at(index).phases, secondOfDay(now_));
+    if (session_ && sessionBlock_ == index) {
         session_.reset();
     }
-    progress_.at(index).skipped = true;
+    skipBlock(progress_.at(index), nowMinute(), secondOfDay(now_));
     scheduler_.dismiss(index);
     persist();
     evaluateNow();
@@ -949,6 +1024,41 @@ void DayController::confirm(int blockIndex, bool happened) {
     progress_.at(static_cast<std::size_t>(blockIndex)).confirmed = happened;
     persist();
     evaluateNow();
+}
+
+bool DayController::canRestore(int blockIndex) const {
+    if (blockIndex < 0 || !day_) {
+        return false;
+    }
+    return !restoreRefusal(*day_, progress_, static_cast<std::size_t>(blockIndex), toTimePoint(now_));
+}
+
+void DayController::restore(int blockIndex) {
+    if (!canRestore(blockIndex)) {
+        return;
+    }
+    const auto index = static_cast<std::size_t>(blockIndex);
+    const BlockTemplate* tpl = block(index);
+    const std::optional<RestoreResult> result = restoreBlock(*day_, progress_, index, now_);
+    if (tpl == nullptr || !result) {
+        return;
+    }
+    if (session_ && (sessionBlock_ == index || result->displaced == sessionBlock_)) {
+        session_.reset();
+    }
+    scheduler_.rearm(index);
+    if (result->displaced) {
+        // Back in the queue, it deserves its start alarm again when the chain reaches it.
+        scheduler_.rearm(*result->displaced);
+    }
+    if (result->pomodoroCount && tpl->pomodoro) {
+        session_ = PomodoroSession(*tpl->pomodoro, *result->pomodoroCount, tpl->pushupsOnBreak);
+        sessionBlock_ = index;
+        applyPomodoroEvents(session_->start(now_), now_);
+    }
+    persist();
+    evaluateNow();
+    emit blockRestored(blockIndex, QString::fromStdString(tpl->activityId));
 }
 
 void DayController::logPushups(int reps) {

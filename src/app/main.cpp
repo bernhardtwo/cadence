@@ -203,6 +203,10 @@ int main(int argc, char* argv[]) {
                      [&eventLog](int blockIndex, int reps) {
                          eventLog.write(u"pushups block=%1 reps=%2"_s.arg(blockIndex).arg(reps));
                      });
+    QObject::connect(&controller, &DayController::blockRestored, &eventLog,
+                     [&eventLog](int blockIndex, const QString& activityId) {
+                         eventLog.write(u"block restored block=%1 activity=%2"_s.arg(blockIndex).arg(activityId));
+                     });
     QObject::connect(&controller, &DayController::sessionRestored, &eventLog,
                      [&eventLog](int blockIndex, const QString& phase, int remaining) {
                          eventLog.write(u"session restored block=%1 phase=%2 remaining=%3s"_s.arg(blockIndex)
